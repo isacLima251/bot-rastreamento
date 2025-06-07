@@ -1,0 +1,21 @@
+{
+  "name": "meu-bot-rastreamento",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "googleapis": "^149.0.0",
+    "puppeteer": "^24.9.0",
+    "venom-bot": "^5.3.0",
+    "xlsx": "^0.18.5"
+  }
+}

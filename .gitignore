@@ -1,0 +1,9 @@
+# Ignorar credenciais e variáveis sensíveis
+.env
+credenciais.json
+
+# Ignorar pastas temporárias
+node_modules/
+dist/
+.vscode/
+.DS_Store
