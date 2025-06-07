@@ -1,5 +1,6 @@
 const { lerPlanilhaGoogle } = require('./src/services/googleSheetService');
 
+// Caso deseje utilizar uma planilha diferente do ID padrão informe aqui
 const sheetId = 'SEU_ID_DA_PLANILHA';
 
 lerPlanilhaGoogle(sheetId).then(dados => {

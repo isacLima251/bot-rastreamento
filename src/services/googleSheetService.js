@@ -1,13 +1,21 @@
 const { google } = require('googleapis');
 const path = require('path');
 
+// ID da planilha utilizado quando nenhum outro é informado nas chamadas
+const DEFAULT_SHEET_ID = '1O3NPxlgVQBcZ5W9NeFLQD717Ted9lHF5ZzM0eaS0aQ4';
+
 const auth = new google.auth.GoogleAuth({
     keyFile: path.join(__dirname, '../../credenciais.json'),
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
 });
 
-async function lerPlanilhaGoogle() {
-    const sheetId = '1O3NPxlgVQBcZ5W9NeFLQD717Ted9lHF5ZzM0eaS0aQ4'; // 🔥 Substitui aqui pelo ID da sua planilha
+/**
+ * Lê os dados de uma planilha do Google Sheets.
+ *
+ * @param {string} [sheetId=DEFAULT_SHEET_ID] - ID da planilha a ser lida.
+ *   Caso não informado, será utilizado o ID padrão definido no arquivo.
+ */
+async function lerPlanilhaGoogle(sheetId = DEFAULT_SHEET_ID) {
     const client = await auth.getClient();
     const sheets = google.sheets({ version: 'v4', auth: client });
 
@@ -43,8 +51,15 @@ async function lerPlanilhaGoogle() {
     }));
 }
 
-async function atualizarLinha(linha, coluna, valor) {
-  const sheetId = '1O3NPxlgVQBcZ5W9NeFLQD717Ted9lHF5ZzM0eaS0aQ4'; // ID da sua planilha
+/**
+ * Atualiza uma célula específica da planilha.
+ *
+ * @param {number} linha - Número da linha que será modificada.
+ * @param {string} coluna - Letra da coluna (ex: 'A').
+ * @param {string} valor - Valor a ser inserido na célula.
+ * @param {string} [sheetId=DEFAULT_SHEET_ID] - ID da planilha a ser atualizada.
+ */
+async function atualizarLinha(linha, coluna, valor, sheetId = DEFAULT_SHEET_ID) {
   const client = await auth.getClient();
   const sheets = google.sheets({ version: 'v4', auth: client });
 
