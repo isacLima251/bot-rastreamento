@@ -3,6 +3,7 @@ const { enviarMensagem } = require('../services/whatsappService');
 const mensagens = require('../utils/messages.json');
 
 async function enviarMensagens() {
+    // Sem parâmetro utilizamos o ID padrão definido em googleSheetService
     const pedidos = await lerPlanilhaGoogle();
 
     for (const pedido of pedidos) {

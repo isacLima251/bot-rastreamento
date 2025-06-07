@@ -1,7 +1,8 @@
 const { lerPlanilhaGoogle } = require('../services/googleSheetService');
 const mensagens = require('../utils/messages.json');
 
-// 🔥 Insira aqui o ID da sua planilha
+// ID da planilha utilizada para gerar as mensagens.
+// Caso não informado na chamada, será usado o ID padrão definido no serviço.
 const sheetId = '1O3NPxlgVQBcZ5W9NeFLQD717Ted9lHF5ZzM0eaS0aQ4';
 
 async function gerarMensagens(req, res) {

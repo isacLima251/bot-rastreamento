@@ -25,6 +25,7 @@ const { lerPlanilhaGoogle } = require('./src/services/googleSheetService');
         }
     });
 
+    // Leitura da planilha utilizando o ID padrão definido no serviço
     const pedidos = await lerPlanilhaGoogle();
 
     for (const pedido of pedidos) {
