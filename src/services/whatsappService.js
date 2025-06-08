@@ -1,35 +1,4 @@
-const venom = require('venom-bot');
-
-let client = null;
-
-async function iniciarWhatsApp() {
-    client = await venom.create({
-        session: 'rastreamento-bot',
-        multidevice: true,
-        headless: false,
-        disableWelcome: true,
-        disableSpins: true,
-        disableSessionRestore: true,
-        deleteSessionOnLogout: true,
-        puppeteerOptions: {
-            timeout: 0,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-gpu',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-zygote',
-                '--single-process',
-                '--disable-web-security'
-            ]
-        }
-    });
-
-    console.log('✅ WhatsApp conectado');
-}
-
-async function enviarMensagem(telefone, mensagem) {
+async function enviarMensagem(telefone, mensagem, client) {
     if (!client) {
         console.error('❌ WhatsApp não está conectado');
         return;
@@ -45,4 +14,4 @@ async function enviarMensagem(telefone, mensagem) {
     }
 }
 
-module.exports = { iniciarWhatsApp, enviarMensagem };
+module.exports = { enviarMensagem };

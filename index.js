@@ -1,15 +1,16 @@
 const { create } = require('venom-bot');
-const { lerPlanilhaGoogle } = require('./src/services/googleSheetService');
+const { enviarMensagensComRegras } = require('./src/controllers/envioController');
+const moment = require('moment');
 
-(async () => {
+async function iniciarBot() {
     const client = await create({
         session: 'rastreamento-bot',
         multidevice: true,
         headless: false,
         disableWelcome: true,
         disableSpins: true,
-        disableSessionRestore: true,
-        deleteSessionOnLogout: true,
+        disableSessionRestore: false,
+        deleteSessionOnLogout: false,
         puppeteerOptions: {
             timeout: 0,
             args: [
@@ -25,21 +26,17 @@ const { lerPlanilhaGoogle } = require('./src/services/googleSheetService');
         }
     });
 
-    const pedidos = await lerPlanilhaGoogle();
+    console.log('✅ WhatsApp conectado com sucesso.');
 
-    for (const pedido of pedidos) {
-        const numero = pedido.telefone;
-        const mensagem = !pedido.codigoRastreio || pedido.codigoRastreio === '-'
-            ? `🎉 Parabéns pela sua compra do ${pedido.produto} ${pedido.nome}! Em até 24h você receberá seu código de rastreio.`
-            : `📦 Olá ${pedido.nome}! Seu pedido do ${pedido.produto} foi postado no dia ${pedido.dataPostagem}. Código de rastreio: ${pedido.codigoRastreio}.`;
+    setInterval(async () => {
+        const horario = moment().format('DD/MM/YYYY HH:mm:ss');
+        console.log(`🕒 ${horario} — Iniciando verificação na planilha...`);
 
-        try {
-            await client.sendText(`${numero}@c.us`, mensagem);
-            console.log(`✅ Mensagem enviada para ${numero}`);
-        } catch (error) {
-            console.error(`❌ Erro ao enviar para ${numero}:`, error.message);
-        }
-    }
+        await enviarMensagensComRegras(client);
 
-    console.log('🚀 Todos os envios finalizados!');
-})();
+
+        console.log(`✅ Verificação concluída.\n`);
+    }, 30000); // A cada 30 segundos
+}
+
+iniciarBot();
