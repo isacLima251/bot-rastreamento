@@ -1,6 +1,16 @@
-async function enviarMensagem(telefone, mensagem, client) {
+let client = null;
+
+async function iniciarWhatsApp(venomClient) {
+    if (!venomClient) {
+        throw new Error("Cliente Venom não fornecido na inicialização do serviço.");
+    }
+    client = venomClient;
+    console.log('✅ WhatsApp Service pronto para enviar mensagens.');
+}
+
+async function enviarMensagem(telefone, mensagem) {
     if (!client) {
-        console.error('❌ WhatsApp não está conectado');
+        console.error('❌ Cliente WhatsApp não iniciado. A mensagem não pode ser enviada.');
         return;
     }
 
@@ -8,10 +18,10 @@ async function enviarMensagem(telefone, mensagem, client) {
 
     try {
         await client.sendText(numeroFormatado, mensagem);
-        console.log(`✅ Mensagem enviada para ${telefone}`);
     } catch (error) {
         console.error(`❌ Erro ao enviar para ${telefone}:`, error.message);
+        throw error;
     }
 }
 
-module.exports = { enviarMensagem };
+module.exports = { iniciarWhatsApp, enviarMensagem };

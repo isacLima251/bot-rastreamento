@@ -2,92 +2,65 @@ const { google } = require('googleapis');
 const path = require('path');
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: path.join(__dirname, '../../credenciais.json'),
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    keyFile: path.join(__dirname, '../../credenciais.json'),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
 const sheetId = '1O3NPxlgVQBcZ5W9NeFLQD717Ted9lHF5ZzM0eaS0aQ4';
+const aBa = 'Página1';
 
-// ✅ Função para ler dados da planilha
 async function lerPlanilhaGoogle() {
-  const client = await auth.getClient();
-  const sheets = google.sheets({ version: 'v4', auth: client });
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
 
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: sheetId,
-    range: 'Página1!A1:J1000',
-  });
-
-  const linhas = response.data.values;
-  if (!linhas || linhas.length === 0) {
-    console.log('❌ Nenhum dado encontrado na planilha.');
-    return [];
-  }
-
-  const headers = linhas[0];
-  const dados = linhas.slice(1).map(row => {
-    const obj = {};
-    headers.forEach((header, index) => {
-      obj[header] = row[index] || '';
+    const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: sheetId,
+        range: `${aBa}!A1:J1000`,
     });
-    return obj;
-  });
 
-  return dados.map(item => ({
-  nome: item.Nome || '',
-  telefone: item.Telefone || '',
-  produto: item.Produto || '',
-  codigoRastreio: item['Código de Rastreio'] || '',
-  dataPostagem: item['Data Postagem'] || '',
-  statusInterno: item['Status Interno'] || '',
-  ultimaLocalizacao: item['Última Localização'] || '',
-  ultimaAtualizacao: item['Última Atualização'] || '',
-  mensagemUltimoStatus: item['Mensagem Último Status'] || ''
-}));
+    const linhas = response.data.values;
+    if (!linhas || linhas.length < 2) {
+        console.log('❌ Nenhum dado de pedido encontrado na planilha.');
+        return [];
+    }
 
+    const headers = linhas[0];
+    const dados = linhas.slice(1).map((row, index) => {
+        const obj = { rowIndex: index + 2 };
+        headers.forEach((header, i) => {
+            obj[header] = row[i] || '';
+        });
+        return obj;
+    });
+
+    return dados;
 }
 
-// ✅ Função para atualizar valores em uma linha da planilha
-async function atualizarLinha(numeroLinha, dados) {
-  const client = await auth.getClient();
-  const sheets = google.sheets({ version: 'v4', auth: client });
+async function atualizarColunasDaLinha(linha, dadosParaAtualizar) {
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
 
-  const colunas = Object.keys(dados);
-  const valores = Object.values(dados);
+    const data = Object.keys(dadosParaAtualizar).map(coluna => ({
+        range: `<span class="math-inline">\{aBa\}\!</span>{coluna}${linha}`,
+        values: [[dadosParaAtualizar[coluna]]],
+    }));
 
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: sheetId,
-    range: 'Página1!A1:Z1',
-  });
-
-  const headers = res.data.values[0];
-  const updates = [];
-
-  for (let i = 0; i < colunas.length; i++) {
-    const colunaIndex = headers.indexOf(colunas[i]);
-    if (colunaIndex === -1) continue;
-
-    const letraColuna = String.fromCharCode(65 + colunaIndex); // A, B, C, ...
-    const celula = `${letraColuna}${numeroLinha}`;
-
-    updates.push({
-      range: `Página1!${celula}`,
-      values: [[valores[i]]],
-    });
-  }
-
-  await sheets.spreadsheets.values.batchUpdate({
-    spreadsheetId: sheetId,
-    requestBody: {
-      valueInputOption: 'RAW',
-      data: updates,
-    },
-  });
-
-  console.log(`📝 Linha ${numeroLinha} atualizada com:`, dados);
+    try {
+        await sheets.spreadsheets.values.batchUpdate({
+            spreadsheetId: sheetId,
+            requestBody: {
+                valueInputOption: 'RAW',
+                data: data,
+            },
+        });
+        console.log(`📌 Planilha atualizada na linha ${linha}:`, dadosParaAtualizar);
+    } catch (err) {
+        console.error(`❌ Erro ao atualizar a linha ${linha} da planilha:`, err.message);
+        throw err;
+    }
 }
 
 module.exports = {
-  lerPlanilhaGoogle,
-  atualizarLinha
+    lerPlanilhaGoogle,
+    atualizarColunasDaLinha,
 };

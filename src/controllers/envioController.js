@@ -1,73 +1,49 @@
-const { lerPlanilhaGoogle, atualizarLinha } = require('../services/googleSheetService');
-const { enviarMensagem } = require('../services/whatsappService');
+// src/controllers/envioController.js
+const pedidoService = require('../services/pedidoService');
+const whatsappService = require('../services/whatsappService');
 
-async function enviarMensagensComRegras(client) {
-    const pedidos = await lerPlanilhaGoogle();
+async function enviarMensagensComRegras(db) {
+    console.log('🤖 Verificando mensagens para enviar...');
+    try {
+        const pedidos = await pedidoService.getAllPedidos(db);
+        
+        for (const pedido of pedidos) {
+            const { id, nome, telefone, produto, codigoRastreio, statusInterno, mensagemUltimoStatus } = pedido;
+            let mensagemParaEnviar = null;
+            let novoStatusDaMensagem = null;
 
-    for (let i = 0; i < pedidos.length; i++) {
-        const pedido = pedidos[i];
-        const numero = pedido.telefone?.trim();
-
-        if (!numero) {
-            console.warn(`⚠️ Número de telefone inválido na linha ${i + 2}. Pulando...`);
-            continue;
-        }
-
-        const status = (pedido['Status Interno'] || '').toLowerCase().trim();
-        const msgAnterior = (pedido['Mensagem Último Status'] || '').toLowerCase().trim();
-        let mensagem = null;
-        let novaMensagemStatus = null;
-
-        // 💬 Regra de boas-vindas para pedidos sem código
-        if (!status || status === 'sem código') {
-            if (!msgAnterior) {
-                mensagem = `🎉 Parabéns pela sua compra do ${pedido.produto}, ${pedido.nome}! Em até 24h você receberá o código de rastreio.`;
-                novaMensagemStatus = 'sem código';
+            if (codigoRastreio && codigoRastreio !== '-') {
+                if (statusInterno && statusInterno.toLowerCase() !== mensagemUltimoStatus) {
+                    switch (statusInterno.toLowerCase()) {
+                        case 'postado':
+                            mensagemParaEnviar = `📦 Olá ${nome}! O seu pedido do ${produto} foi postado. Código: ${codigoRastreio}.`;
+                            novoStatusDaMensagem = 'postado';
+                            break;
+                        case 'objeto expedido':
+                            mensagemParaEnviar = `✈️ Olá ${nome}, boa notícia! O seu pedido foi expedido e está a caminho.`;
+                            novoStatusDaMensagem = 'objeto expedido';
+                            break;
+                        // Adicione outros status aqui...
+                    }
+                }
             } else {
-                console.log(`⏭️ ${pedido.nome} já recebeu a mensagem de boas-vindas.`);
+                if (!mensagemUltimoStatus) {
+                    mensagemParaEnviar = `🎉 Parabéns pela sua compra do ${produto}, ${nome}! Em até 24h receberá o seu código de rastreio.`;
+                    novoStatusDaMensagem = 'boas-vindas enviada';
+                }
             }
-        }
 
-        // 💬 Regras para status rastreáveis
-        else if (msgAnterior !== status) {
-            switch (status) {
-                case 'postado':
-                    mensagem = `📦 Olá ${pedido.nome}! Seu pedido do ${pedido.produto} foi postado no dia ${pedido.dataPostagem}. Código: ${pedido.codigoRastreio}.`;
-                    novaMensagemStatus = 'postado';
-                    break;
-                case 'em trânsito':
-                    mensagem = `🚚 ${pedido.nome}, seu pedido está a caminho de ${pedido.ultimaLocalizacao}. Fique ligado!`;
-                    novaMensagemStatus = 'em trânsito';
-                    break;
-                case 'saiu para entrega':
-                    mensagem = `🏠 ${pedido.nome}, seu pedido saiu para entrega. Receba com carinho!`;
-                    novaMensagemStatus = 'saiu para entrega';
-                    break;
-                case 'entregue':
-                    mensagem = `🎉 ${pedido.nome}, seu pedido foi entregue! Agradecemos a sua compra.`;
-                    novaMensagemStatus = 'entregue';
-                    break;
-                default:
-                    console.log(`ℹ️ Status '${status}' não tem mensagem configurada.`);
-            }
-        } else {
-            console.log(`⏭️ ${pedido.nome} já recebeu mensagem para status '${status}', pulando.`);
-        }
-
-        // ✅ Envia e atualiza planilha
-        if (mensagem) {
-            try {
-                await enviarMensagem(numero, mensagem, client);
-                console.log(`✅ Mensagem enviada para ${numero}: ${novaMensagemStatus}`);
-                await atualizarLinha(i + 2, { 'Mensagem Último Status': novaMensagemStatus });
-            } catch (error) {
-                console.error(`❌ Erro ao enviar para ${numero}:`, error.message);
+            if (mensagemParaEnviar && novoStatusDaMensagem) {
+                await whatsappService.enviarMensagem(telefone, mensagemParaEnviar);
+                // GUARDA NO HISTÓRICO
+                await pedidoService.addMensagemHistorico(db, id, mensagemParaEnviar, novoStatusDaMensagem);
+                await pedidoService.updateCamposPedido(db, id, { mensagemUltimoStatus: novoStatusDaMensagem });
+                console.log(`✅ Mensagem de '${novoStatusDaMensagem}' enviada e registada para ${nome}.`);
             }
         }
+    } catch (err) {
+        console.error("❌ Falha no ciclo de envio de mensagens:", err);
     }
-
-    console.log('🚀 Todos os envios finalizados!');
 }
 
 module.exports = { enviarMensagensComRegras };
-

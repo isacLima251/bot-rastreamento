@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Automaza</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header><h1>Painel de Controlo Automaza</h1></header>
+
+        <section class="search-section">
+            <input type="text" id="barra-busca" placeholder="🔎 Buscar por nome ou telefone...">
+        </section>
+
+        <section class="form-section">
+            <h2>Adicionar Novo Pedido</h2>
+            <form id="form-novo-pedido">
+                <input type="text" name="nome" placeholder="Nome do Cliente" required>
+                <input type="text" name="telefone" placeholder="Telefone (com DDD)" required>
+                <input type="text" name="produto" placeholder="Nome do Produto">
+                <input type="text" name="codigoRastreio" placeholder="Código de Rastreio (Opcional)">
+                <button type="submit">Salvar Pedido</button>
+            </form>
+        </section>
+
+        <main class="kanban-board">
+            <div class="kanban-coluna">
+                <h3 class="coluna-titulo">📥 Entrada</h3>
+                <div class="pedidos-lista" id="coluna-entrada"></div>
+            </div>
+            <div class="kanban-coluna">
+                <h3 class="coluna-titulo">⏳ Esperando</h3>
+                <div class="pedidos-lista" id="coluna-esperando"></div>
+            </div>
+            <div class="kanban-coluna">
+                <h3 class="coluna-titulo">✅ Finalizados</h3>
+                <div class="pedidos-lista" id="coluna-finalizados"></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-confirmacao" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Confirmar Ação</h3>
+            <p id="modal-texto">Tem a certeza que quer apagar este pedido?</p>
+            <div class="modal-acoes">
+                <button id="btn-modal-cancelar" class="btn-cancelar">Cancelar</button>
+                <button id="btn-modal-confirmar" class="btn-confirmar-apagar">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
