@@ -36,6 +36,24 @@ const getPedidoById = (db, id) => {
 };
 
 /**
+ * Busca um pedido pelo número de telefone.
+ * @param {object} db A instância do banco de dados.
+ * @param {string} telefone O número de telefone a ser procurado.
+ * @returns {Promise<object|null>}
+ */
+const findPedidoByTelefone = (db, telefone) => {
+    // Procura pelo número de telefone que TERMINA com os dígitos fornecidos
+    // para funcionar com ou sem o '55' no início.
+    const sql = "SELECT * FROM pedidos WHERE telefone LIKE ?";
+    return new Promise((resolve, reject) => {
+        db.get(sql, [`%${telefone}`], (err, row) => {
+            if (err) return reject(err);
+            resolve(row);
+        });
+    });
+};
+
+/**
  * Actualiza um ou mais campos de um pedido específico no banco de dados.
  * @param {object} db A instância do banco de dados.
  * @param {number} pedidoId O ID do pedido a ser actualizado.
@@ -63,17 +81,17 @@ const updateCamposPedido = (db, pedidoId, campos) => {
 };
 
 /**
- * Adiciona uma nova entrada ao histórico de mensagens de um pedido.
+ * Adiciona uma nova entrada ao histórico de mensagens.
  * @param {object} db A instância do banco de dados.
  * @param {number} pedidoId O ID do pedido.
  * @param {string} mensagem O conteúdo da mensagem.
- * @param {string} tipoStatus O tipo da mensagem (ex: 'manual', 'postado').
- * @returns {Promise<{id: number}>}
+ * @param {string} tipoMensagem O tipo da mensagem ('manual', 'postado', etc.).
+ * @param {string} origem A origem da mensagem ('bot' ou 'cliente').
  */
-const addMensagemHistorico = (db, pedidoId, mensagem, tipoStatus) => {
-    const sql = `INSERT INTO historico_mensagens (pedido_id, mensagem, tipo_status) VALUES (?, ?, ?)`;
+const addMensagemHistorico = (db, pedidoId, mensagem, tipoMensagem, origem) => {
+    const sql = `INSERT INTO historico_mensagens (pedido_id, mensagem, tipo_mensagem, origem) VALUES (?, ?, ?, ?)`;
     return new Promise((resolve, reject) => {
-        db.run(sql, [pedidoId, mensagem, tipoStatus], function(err) {
+        db.run(sql, [pedidoId, mensagem, tipoMensagem, origem], function(err) {
             if (err) {
                 console.error(`Erro ao adicionar ao histórico do pedido ${pedidoId}`, err);
                 return reject(err);
@@ -105,6 +123,7 @@ const getHistoricoPorPedidoId = (db, pedidoId) => {
 module.exports = {
     getAllPedidos,
     getPedidoById,
+    findPedidoByTelefone,
     updateCamposPedido,
     addMensagemHistorico,
     getHistoricoPorPedidoId

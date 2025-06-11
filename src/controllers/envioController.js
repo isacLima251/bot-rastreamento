@@ -3,14 +3,16 @@ const pedidoService = require('../services/pedidoService');
 const whatsappService = require('../services/whatsappService');
 
 async function enviarMensagensComRegras(db) {
-    console.log('🤖 Verificando mensagens para enviar...');
+    console.log('🤖 Verificando mensagens automáticas para enviar...');
     try {
         const pedidos = await pedidoService.getAllPedidos(db);
         
         for (const pedido of pedidos) {
-            const { id, nome, telefone, produto, codigoRastreio, statusInterno, mensagemUltimoStatus } = pedido;
+            // CORREÇÃO: As variáveis precisam de ser declaradas dentro do loop
             let mensagemParaEnviar = null;
             let novoStatusDaMensagem = null;
+
+            const { id, nome, telefone, produto, codigoRastreio, statusInterno, mensagemUltimoStatus } = pedido;
 
             if (codigoRastreio && codigoRastreio !== '-') {
                 if (statusInterno && statusInterno.toLowerCase() !== mensagemUltimoStatus) {
@@ -19,11 +21,11 @@ async function enviarMensagensComRegras(db) {
                             mensagemParaEnviar = `📦 Olá ${nome}! O seu pedido do ${produto} foi postado. Código: ${codigoRastreio}.`;
                             novoStatusDaMensagem = 'postado';
                             break;
-                        case 'objeto expedido':
+                         case 'objeto expedido':
                             mensagemParaEnviar = `✈️ Olá ${nome}, boa notícia! O seu pedido foi expedido e está a caminho.`;
                             novoStatusDaMensagem = 'objeto expedido';
                             break;
-                        // Adicione outros status aqui...
+                        // Adicione outros status automáticos aqui...
                     }
                 }
             } else {
@@ -35,10 +37,9 @@ async function enviarMensagensComRegras(db) {
 
             if (mensagemParaEnviar && novoStatusDaMensagem) {
                 await whatsappService.enviarMensagem(telefone, mensagemParaEnviar);
-                // GUARDA NO HISTÓRICO
-                await pedidoService.addMensagemHistorico(db, id, mensagemParaEnviar, novoStatusDaMensagem);
+                await pedidoService.addMensagemHistorico(db, id, mensagemParaEnviar, novoStatusDaMensagem, 'bot');
                 await pedidoService.updateCamposPedido(db, id, { mensagemUltimoStatus: novoStatusDaMensagem });
-                console.log(`✅ Mensagem de '${novoStatusDaMensagem}' enviada e registada para ${nome}.`);
+                console.log(`✅ Mensagem automática de '${novoStatusDaMensagem}' enviada e registada para ${nome}.`);
             }
         }
     } catch (err) {

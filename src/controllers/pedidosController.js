@@ -1,5 +1,6 @@
 // src/controllers/pedidosController.js
 const pedidoService = require('../services/pedidoService');
+const whatsappService = require('../services/whatsappService');
 
 /**
  * Função de validação para números de telefone.
@@ -29,7 +30,7 @@ exports.listarPedidos = (req, res) => {
         params.push(`%${busca}%`);
     }
 
-    sql += " ORDER BY id DESC"; // Ordena pelos mais recentes
+    sql += " ORDER BY id DESC";
 
     db.all(sql, params, (err, rows) => {
         if (err) {
@@ -130,6 +131,8 @@ exports.getHistoricoDoPedido = async (req, res) => {
         res.status(500).json({ error: "Falha ao buscar o histórico do pedido." });
     }
 };
+
+// ENVIA uma mensagem manualmente
 exports.enviarMensagemManual = async (req, res) => {
     const db = req.db;
     const { id } = req.params; // ID do pedido
@@ -148,8 +151,8 @@ exports.enviarMensagemManual = async (req, res) => {
         // Envia a mensagem via WhatsApp
         await whatsappService.enviarMensagem(pedido.telefone, mensagem);
         
-        // Guarda a mensagem manual no histórico
-        await pedidoService.addMensagemHistorico(db, id, mensagem, 'manual');
+        // Guarda a mensagem manual no histórico, especificando a origem como 'bot'
+        await pedidoService.addMensagemHistorico(db, id, mensagem, 'manual', 'bot');
 
         res.status(200).json({ message: "Mensagem enviada e registada com sucesso!" });
 

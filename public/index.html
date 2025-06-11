@@ -5,53 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Automaza</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <header><h1>Painel de Controlo Automaza</h1></header>
-
-        <section class="search-section">
-            <input type="text" id="barra-busca" placeholder="🔎 Buscar por nome ou telefone...">
-        </section>
-
-        <section class="form-section">
-            <h2>Adicionar Novo Pedido</h2>
-            <form id="form-novo-pedido">
-                <input type="text" name="nome" placeholder="Nome do Cliente" required>
-                <input type="text" name="telefone" placeholder="Telefone (com DDD)" required>
-                <input type="text" name="produto" placeholder="Nome do Produto">
-                <input type="text" name="codigoRastreio" placeholder="Código de Rastreio (Opcional)">
-                <button type="submit">Salvar Pedido</button>
-            </form>
-        </section>
-
-        <main class="kanban-board">
-            <div class="kanban-coluna">
-                <h3 class="coluna-titulo">📥 Entrada</h3>
-                <div class="pedidos-lista" id="coluna-entrada"></div>
+    <div class="app-layout">
+        <!-- Barra Lateral de Contactos -->
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <h2>Contactos</h2>
+                <button id="btn-adicionar-novo" title="Adicionar Novo Pedido">+</button>
+            </header>
+            <div class="search-container">
+                <input type="text" id="barra-busca" placeholder="🔎 Buscar por nome ou telefone...">
             </div>
-            <div class="kanban-coluna">
-                <h3 class="coluna-titulo">⏳ Esperando</h3>
-                <div class="pedidos-lista" id="coluna-esperando"></div>
+            <div class="contact-list" id="lista-contactos"></div>
+        </aside>
+
+        <!-- Área de Conteúdo Principal -->
+        <main class="main-content" id="main-content-area">
+            <div id="chat-window">
+                <div class="placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <h3>Selecione um contacto</h3>
+                    <p>Escolha um contacto para ver os detalhes e o histórico.</p>
+                </div>
             </div>
-            <div class="kanban-coluna">
-                <h3 class="coluna-titulo">✅ Finalizados</h3>
-                <div class="pedidos-lista" id="coluna-finalizados"></div>
-            </div>
+            
+            <footer class="chat-footer" id="chat-footer">
+                <form id="form-enviar-mensagem">
+                    <input type="text" id="input-mensagem" placeholder="Digite a sua mensagem..." autocomplete="off" disabled>
+                    <button type="submit" aria-label="Enviar" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </form>
+            </footer>
         </main>
     </div>
 
-    <div id="modal-confirmacao" class="modal-overlay">
+    <!-- Modal de Adicionar/Editar Pedido -->
+    <div id="modal-pedido" class="modal-overlay">
         <div class="modal-content">
-            <h3>Confirmar Ação</h3>
-            <p id="modal-texto">Tem a certeza que quer apagar este pedido?</p>
-            <div class="modal-acoes">
-                <button id="btn-modal-cancelar" class="btn-cancelar">Cancelar</button>
-                <button id="btn-modal-confirmar" class="btn-confirmar-apagar">Confirmar</button>
-            </div>
+            <h3 id="modal-titulo">Adicionar Novo Pedido</h3>
+            <form id="form-pedido">
+                <input type="hidden" id="pedido-id" name="id">
+                <input type="text" id="nome" name="nome" placeholder="Nome do Cliente" required>
+                <input type="text" id="telefone" name="telefone" placeholder="Telefone (com DDD)" required>
+                <input type="text" id="produto" name="produto" placeholder="Nome do Produto">
+                <input type="text" id="codigoRastreio" name="codigoRastreio" placeholder="Código de Rastreio (Opcional)">
+                <div class="modal-acoes">
+                    <button type="button" id="btn-modal-cancelar" class="btn-cancelar">Cancelar</button>
+                    <button type="submit" id="btn-modal-salvar" class="btn-salvar">Salvar</button>
+                </div>
+            </form>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>

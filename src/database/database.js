@@ -13,7 +13,6 @@ const initDb = () => {
             console.log('✅ Conectado ao banco de dados SQLite.');
 
             db.serialize(() => {
-                // Tabela de Pedidos (existente)
                 db.run(`
                     CREATE TABLE IF NOT EXISTS pedidos (
                         id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT, telefone TEXT NOT NULL, 
@@ -23,13 +22,14 @@ const initDb = () => {
                     )
                 `, (err) => { if (err) return reject(err); console.log("✔️ Tabela 'pedidos' pronta."); });
 
-                // NOVA TABELA para o histórico
+                // TABELA DE HISTÓRICO ACTUALIZADA
                 db.run(`
                     CREATE TABLE IF NOT EXISTS historico_mensagens (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         pedido_id INTEGER NOT NULL,
                         mensagem TEXT NOT NULL,
-                        tipo_status TEXT,
+                        tipo_mensagem TEXT,
+                        origem TEXT NOT NULL, -- 'bot' ou 'cliente'
                         data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (pedido_id) REFERENCES pedidos (id) ON DELETE CASCADE
                     )

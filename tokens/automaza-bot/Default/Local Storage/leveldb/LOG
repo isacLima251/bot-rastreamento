@@ -1,6 +1,3 @@
-2025/06/10-16:30:56.114 78d8 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb/MANIFEST-000001
-2025/06/10-16:30:56.118 78d8 Recovering log #12
-2025/06/10-16:30:56.120 78d8 Reusing old log C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb/000012.log 
-2025/06/10-16:31:56.135 75d4 Level-0 table #17: started
-2025/06/10-16:31:56.139 75d4 Level-0 table #17: 15360 bytes OK
-2025/06/10-16:31:56.141 75d4 Delete type=0 #12
+2025/06/10-23:25:32.644 44f8 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb/MANIFEST-000001
+2025/06/10-23:25:32.649 44f8 Recovering log #19
+2025/06/10-23:25:32.651 44f8 Reusing old log C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb/000019.log 
