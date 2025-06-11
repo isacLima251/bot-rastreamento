@@ -1,5 +1,4 @@
-/* public/style.css */
-:root { --bg-color: #f0f2f5; --sidebar-bg: #ffffff; --main-bg: #e9ebee; --primary-color: #0d8de2; --text-color: #050505; --text-secondary: #65676b; --border-color: #ced0d4; --hover-bg: #f2f2f2; --message-sent-bg: #dcf8c6; --message-manual-bg: #e5e5ea; }
+:root { --bg-color: #f0f2f5; --sidebar-bg: #ffffff; --main-bg: #e9ebee; --primary-color: #0d8de2; --text-color: #050505; --text-secondary: #65676b; --border-color: #ced0d4; --hover-bg: #f2f2f2; --message-sent-bg: #dcf8c6; --message-manual-bg: #e5e5ea; --message-received-bg: #ffffff; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; }
 .app-layout { display: flex; height: 100vh; }
@@ -29,7 +28,7 @@ body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); colo
 .chat-message { padding: 10px 15px; border-radius: 18px; max-width: 75%; line-height: 1.4; }
 .chat-message.enviado { background-color: var(--message-sent-bg); align-self: flex-end; }
 .chat-message.manual { background-color: var(--message-manual-bg); align-self: flex-end; }
-.chat-message.recebido { background-color: #ffffff; align-self: flex-start; border: 1px solid var(--border-color); }
+.chat-message.recebido { background-color: var(--message-received-bg); align-self: flex-start; border: 1px solid var(--border-color); }
 .chat-message .timestamp { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px; text-align: right; }
 .chat-footer { padding: 10px 20px; background-color: #f0f2f5; border-top: 1px solid var(--border-color); flex-shrink: 0; }
 #form-enviar-mensagem { display: flex; gap: 10px; }

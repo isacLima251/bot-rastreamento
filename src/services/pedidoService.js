@@ -36,19 +36,35 @@ const getPedidoById = (db, id) => {
 };
 
 /**
- * Busca um pedido pelo número de telefone.
+ * Busca um pedido pelo número de telefone, tratando variações (com ou sem 55, etc.).
  * @param {object} db A instância do banco de dados.
- * @param {string} telefone O número de telefone a ser procurado.
- * @returns {Promise<object|null>}
+ * @param {string} telefone O número de telefone do remetente (ex: 5582999991111).
+ * @returns {Promise<object|null>} O pedido encontrado ou nulo.
  */
 const findPedidoByTelefone = (db, telefone) => {
-    // Procura pelo número de telefone que TERMINA com os dígitos fornecidos
-    // para funcionar com ou sem o '55' no início.
-    const sql = "SELECT * FROM pedidos WHERE telefone LIKE ?";
     return new Promise((resolve, reject) => {
-        db.get(sql, [`%${telefone}`], (err, row) => {
+        // Tenta encontrar uma correspondência exata primeiro
+        db.get("SELECT * FROM pedidos WHERE telefone = ?", [telefone], (err, row) => {
             if (err) return reject(err);
-            resolve(row);
+            if (row) {
+                // Encontrou uma correspondência exata, retorna imediatamente
+                return resolve(row);
+            }
+            
+            // Se não encontrou e o número tem o 55, tenta buscar sem ele
+            if (telefone.startsWith('55') && telefone.length > 11) {
+                const telefoneSem55 = telefone.substring(2);
+                db.get("SELECT * FROM pedidos WHERE telefone = ?", [telefoneSem55], (err, row) => {
+                    if (err) return reject(err);
+                    resolve(row);
+                });
+            } else {
+                // Se o número não tem 55, tenta buscar com ele
+                db.get("SELECT * FROM pedidos WHERE telefone = ?", [`55${telefone}`], (err, row) => {
+                     if (err) return reject(err);
+                     resolve(row);
+                });
+            }
         });
     });
 };

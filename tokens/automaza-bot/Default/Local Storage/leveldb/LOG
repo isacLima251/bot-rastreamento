@@ -1,3 +1,2 @@
-2025/06/10-23:25:32.644 44f8 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb/MANIFEST-000001
-2025/06/10-23:25:32.649 44f8 Recovering log #19
-2025/06/10-23:25:32.651 44f8 Reusing old log C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb/000019.log 
+2025/06/11-11:36:28.864 20b8 Creating DB C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb since it was missing.
+2025/06/11-11:36:28.883 20b8 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb/MANIFEST-000001
