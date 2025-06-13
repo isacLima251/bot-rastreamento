@@ -1,3 +1,2 @@
-2025/06/13-10:47:48.165 5618 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Service Worker\Database/MANIFEST-000001
-2025/06/13-10:47:48.165 5618 Recovering log #3
-2025/06/13-10:47:48.166 5618 Reusing old log C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Service Worker\Database/000003.log 
+2025/06/13-16:34:04.862 3adc Creating DB C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Service Worker\Database since it was missing.
+2025/06/13-16:34:04.879 3adc Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Service Worker\Database/MANIFEST-000001

@@ -1,7 +1,25 @@
+// --- CORREÇÃO: Importando o whatsappService ---
+const whatsappService = require('./whatsappService');
+
+// --- CORREÇÃO: Adicionando a função de ajuda que faltava ---
+/**
+ * Normaliza um número de telefone para o formato internacional brasileiro (55 + DDD + Número).
+ */
+function normalizeTelefone(telefoneRaw) {
+    if (!telefoneRaw) return '';
+    const digitos = String(telefoneRaw).replace(/\D/g, '');
+    if (digitos.startsWith('55') && (digitos.length === 12 || digitos.length === 13)) {
+        return digitos;
+    }
+    if (digitos.length === 10 || digitos.length === 11) {
+        return `55${digitos}`;
+    }
+    return digitos;
+}
+
+
 /**
  * Busca todos os pedidos do banco de dados.
- * @param {object} db A instância do banco de dados.
- * @returns {Promise<Array>} Uma lista de todos os pedidos.
  */
 const getAllPedidos = (db) => {
     return new Promise((resolve, reject) => {
@@ -17,9 +35,6 @@ const getAllPedidos = (db) => {
 
 /**
  * Busca um único pedido pelo seu ID.
- * @param {object} db A instância do banco de dados.
- * @param {number} id O ID do pedido.
- * @returns {Promise<object|null>} O pedido encontrado ou nulo.
  */
 const getPedidoById = (db, id) => {
     return new Promise((resolve, reject) => {
@@ -34,15 +49,14 @@ const getPedidoById = (db, id) => {
 };
 
 /**
- * Busca um pedido pelo número de telefone, tratando variações (com ou sem 55).
- * @param {object} db A instância do banco de dados.
- * @param {string} telefone O número de telefone.
- * @returns {Promise<object|null>} O pedido encontrado ou nulo.
+ * Busca um pedido pelo número de telefone.
  */
 const findPedidoByTelefone = (db, telefone) => {
     return new Promise((resolve, reject) => {
-        const telefoneCom55 = telefone.startsWith('55') ? telefone : `55${telefone}`;
-        const telefoneSem55 = telefone.startsWith('55') ? telefone.substring(2) : telefone;
+        const telefoneNormalizado = normalizeTelefone(telefone);
+        const telefoneCom55 = telefoneNormalizado.startsWith('55') ? telefoneNormalizado : `55${telefoneNormalizado}`;
+        const telefoneSem55 = telefoneNormalizado.startsWith('55') ? telefoneNormalizado.substring(2) : telefoneNormalizado;
+        
         const sql = "SELECT * FROM pedidos WHERE telefone = ? OR telefone = ?";
         
         db.get(sql, [telefoneCom55, telefoneSem55], (err, row) => {
@@ -57,10 +71,6 @@ const findPedidoByTelefone = (db, telefone) => {
 
 /**
  * Atualiza um ou mais campos de um pedido específico.
- * @param {object} db A instância do banco de dados.
- * @param {number} pedidoId O ID do pedido.
- * @param {object} campos O objeto com os campos e valores a serem atualizados.
- * @returns {Promise<{changes: number}>}
  */
 const updateCamposPedido = (db, pedidoId, campos) => {
     if (!campos || Object.keys(campos).length === 0) {
@@ -83,12 +93,6 @@ const updateCamposPedido = (db, pedidoId, campos) => {
 
 /**
  * Adiciona uma nova entrada ao histórico de mensagens.
- * @param {object} db A instância do banco de dados.
- * @param {number} pedidoId O ID do pedido.
- * @param {string} mensagem O conteúdo da mensagem.
- * @param {string} tipoMensagem O tipo da mensagem ('manual', 'postado', etc.).
- * @param {string} origem A origem da mensagem ('bot' ou 'cliente').
- * @returns {Promise<{id: number}>}
  */
 const addMensagemHistorico = (db, pedidoId, mensagem, tipoMensagem, origem) => {
     const sql = `INSERT INTO historico_mensagens (pedido_id, mensagem, tipo_mensagem, origem) VALUES (?, ?, ?, ?)`;
@@ -105,9 +109,6 @@ const addMensagemHistorico = (db, pedidoId, mensagem, tipoMensagem, origem) => {
 
 /**
  * Busca o histórico de mensagens de um pedido específico.
- * @param {object} db A instância do banco de dados.
- * @param {number} pedidoId O ID do pedido.
- * @returns {Promise<Array>}
  */
 const getHistoricoPorPedidoId = (db, pedidoId) => {
     const sql = `SELECT * FROM historico_mensagens WHERE pedido_id = ? ORDER BY data_envio ASC`;
@@ -124,9 +125,6 @@ const getHistoricoPorPedidoId = (db, pedidoId) => {
 
 /**
  * Incrementa o contador de mensagens não lidas para um pedido.
- * @param {object} db A instância do banco de dados.
- * @param {number} pedidoId O ID do pedido.
- * @returns {Promise<{changes: number}>}
  */
 const incrementarNaoLidas = (db, pedidoId) => {
     return new Promise((resolve, reject) => {
@@ -143,9 +141,6 @@ const incrementarNaoLidas = (db, pedidoId) => {
 
 /**
  * Zera o contador de mensagens não lidas para um pedido.
- * @param {object} db A instância do banco de dados.
- * @param {number} pedidoId O ID do pedido.
- * @returns {Promise<{changes: number}>}
  */
 const marcarComoLido = (db, pedidoId) => {
     return new Promise((resolve, reject) => {
@@ -160,6 +155,40 @@ const marcarComoLido = (db, pedidoId) => {
     });
 };
 
+/**
+ * Cria um novo pedido no banco de dados.
+ */
+const criarPedido = (db, dadosPedido) => {
+    return new Promise(async (resolve, reject) => {
+        const { nome, telefone, produto, codigoRastreio } = dadosPedido;
+
+        const telefoneValidado = normalizeTelefone(telefone);
+        if (!telefoneValidado || !nome) {
+            return reject(new Error("Nome e telefone são obrigatórios e válidos."));
+        }
+
+        const fotoUrl = await whatsappService.getProfilePicUrl(telefoneValidado);
+        
+        const sql = 'INSERT INTO pedidos (nome, telefone, produto, codigoRastreio, fotoPerfilUrl) VALUES (?, ?, ?, ?, ?)';
+        const params = [nome, telefoneValidado, produto || null, codigoRastreio || null, fotoUrl];
+        
+        db.run(sql, params, function (err) {
+            if (err) {
+                return reject(err);
+            }
+            
+            resolve({
+                id: this.lastID,
+                nome,
+                telefone: telefoneValidado,
+                produto,
+                codigoRastreio,
+                fotoPerfilUrl: fotoUrl
+            });
+        });
+    });
+};
+
 module.exports = {
     getAllPedidos,
     getPedidoById,
@@ -168,5 +197,6 @@ module.exports = {
     addMensagemHistorico,
     getHistoricoPorPedidoId,
     incrementarNaoLidas,
-    marcarComoLido
+    marcarComoLido,
+    criarPedido,
 };

@@ -1,3 +1,2 @@
-2025/06/13-10:47:48.245 6524 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\shared_proto_db\metadata/MANIFEST-000001
-2025/06/13-10:47:48.246 6524 Recovering log #3
-2025/06/13-10:47:48.246 6524 Reusing old log C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\shared_proto_db\metadata/000003.log 
+2025/06/13-16:34:04.811 5638 Creating DB C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\shared_proto_db\metadata since it was missing.
+2025/06/13-16:34:04.820 5638 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\shared_proto_db\metadata/MANIFEST-000001

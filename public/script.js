@@ -14,13 +14,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const notificacaoEl = document.getElementById('notificacao');
     const notificacaoTextoEl = document.getElementById('notificacao-texto');
 
+    // --- ADICIONADO: Seletores para a nova UI de Configurações ---
+    const chatViewEl = document.getElementById('chat-view');
+    const settingsViewEl = document.getElementById('settings-view');
+    const btnSettingsEl = document.getElementById('btn-settings');
+    const statusIndicatorEl = document.getElementById('status-whatsapp');
+    const statusTextEl = statusIndicatorEl.querySelector('.status-text');
+    const settingsStatusTextEl = document.getElementById('settings-status-text');
+    const qrCodeContainerEl = document.getElementById('qr-code-container');
+    const btnConectarEl = document.getElementById('btn-conectar');
+    const btnDesconectarEl = document.getElementById('btn-desconectar');
+
+
     // --- 2. Estado da Aplicação ---
     let todosOsPedidos = [];
     let pedidoAtivoId = null;
     let debounceTimer;
     let notificacaoTimer;
 
-    // --- 3. Função de Notificação ---
+    // --- 3. Funções de UI e Notificação ---
     const showNotification = (message, type = 'error') => {
         clearTimeout(notificacaoTimer);
         notificacaoEl.classList.remove('show', 'error', 'success');
@@ -34,19 +46,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 4000);
     };
 
+    function showView(viewName) {
+        chatViewEl.classList.add('hidden');
+        settingsViewEl.classList.add('hidden');
+        document.getElementById(`${viewName}-view`).classList.remove('hidden');
+    }
+
+    function updateStatusUI(status, data = {}) {
+        statusIndicatorEl.className = 'status-indicator';
+        statusIndicatorEl.classList.add(status.toLowerCase());
+        
+        const statusMap = {
+            DISCONNECTED: 'Desconectado',
+            CONNECTING: 'A conectar...',
+            CONNECTED: 'Conectado',
+            QR_CODE: 'Aguardando QR Code'
+        };
+        statusTextEl.textContent = statusMap[status] || 'Desconhecido';
+        settingsStatusTextEl.textContent = statusMap[status] || 'Desconhecido';
+
+        qrCodeContainerEl.innerHTML = '';
+        if (status === 'QR_CODE' && data.qrCode) {
+            qrCodeContainerEl.innerHTML = `<p>Escaneie o QR Code com seu celular:</p><img src="${data.qrCode}" alt="QR Code do WhatsApp">`;
+        }
+
+        btnConectarEl.style.display = (status === 'DISCONNECTED') ? 'inline-block' : 'none';
+        btnDesconectarEl.style.display = (status === 'CONNECTED') ? 'inline-block' : 'none';
+    }
+
     // --- 4. Lógica WebSocket (Tempo Real) ---
     const connectWebSocket = () => {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
         const ws = new WebSocket(`${wsProtocol}://${window.location.host}`);
         ws.onopen = () => console.log('🔗 Conexão WebSocket estabelecida.');
         
+        // --- CORRIGIDO: Lógica do onmessage completa ---
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             console.log('🔔 Notificação WebSocket recebida:', data);
             
             if (data.type === 'nova_mensagem') {
                 const pedidoAfetado = todosOsPedidos.find(p => p.id === data.pedidoId);
-                
                 if (pedidoAfetado) {
                     if (pedidoAfetado.id !== pedidoAtivoId) {
                         pedidoAfetado.mensagensNaoLidas = (pedidoAfetado.mensagensNaoLidas || 0) + 1;
@@ -57,6 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     fetchErenderizarTudo();
                 }
+            } else if (data.type === 'status_update') {
+                updateStatusUI(data.status, data);
             }
         };
 
@@ -67,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- 5. Funções de Renderização e API ---
-
     const renderizarListaDeContactos = () => {
         const termoBusca = barraBuscaEl.value.toLowerCase();
         const filtrados = todosOsPedidos.filter(p => 
@@ -126,8 +167,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         pedidoAtivoId = pedido.id;
         
-        // --- CORREÇÃO APLICADA AQUI ---
-        // O botão "Atualizar Foto" foi movido para dentro da string do innerHTML.
         chatWindowEl.innerHTML = `
             <div class="detalhes-header">
                 <h3>${pedido.nome} (#${pedido.id})</h3>
@@ -193,6 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 6. Funções do Modal ---
     const abrirModal = (pedido = null) => {
         formPedidoEl.reset();
+        
         modalTituloEl.textContent = 'Adicionar Novo Pedido';
         formPedidoEl.querySelector('#pedido-id').value = '';
         if (pedido) {
@@ -237,9 +277,25 @@ document.addEventListener('DOMContentLoaded', () => {
         debounceTimer = setTimeout(renderizarListaDeContactos, 300);
     });
 
+    btnSettingsEl.addEventListener('click', () => {
+        showView('settings');
+    });
+
+    btnConectarEl.addEventListener('click', () => {
+        fetch('/api/whatsapp/connect', { method: 'POST' });
+    });
+
+    btnDesconectarEl.addEventListener('click', () => {
+        if (confirm('Tem a certeza que deseja desconectar a sessão do WhatsApp?')) {
+            fetch('/api/whatsapp/disconnect', { method: 'POST' });
+        }
+    });
+
+    // --- REMOVIDO: Bloco duplicado de listener ---
     listaContactosEl.addEventListener('click', async (e) => {
         const item = e.target.closest('.contact-item');
         if (item) {
+            showView('chat');
             const pedidoId = parseInt(item.dataset.id, 10);
             const pedido = todosOsPedidos.find(p => p.id === pedidoId);
             if (pedido) {
@@ -248,15 +304,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Event listener unificado para a área principal
     mainContentAreaEl.addEventListener('click', async (e) => {
-        // Lógica para o botão "Editar"
         if (e.target.classList.contains('btn-editar-main')) {
             const pedido = todosOsPedidos.find(p => p.id === pedidoAtivoId);
             if (pedido) abrirModal(pedido);
         }
 
-        // Lógica para o botão "Atualizar Foto"
         if (e.target.classList.contains('btn-atualizar-foto')) {
             const botao = e.target;
             const pedidoId = parseInt(botao.dataset.id, 10);
@@ -268,17 +321,13 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch(`/api/pedidos/${pedidoId}/atualizar-foto`, { method: 'POST' });
                 const resultado = await response.json();
-
                 if (!response.ok) {
                     throw new Error(resultado.error || 'Falha ao buscar foto.');
                 }
                 showNotification('Foto de perfil atualizada com sucesso!', 'success');
                 await fetchErenderizarTudo();
-
             } catch (error) {
                 showNotification(error.message, 'error');
-            } finally {
-                // O botão será recriado na renderização, então não precisamos reativá-lo aqui.
             }
         }
     });

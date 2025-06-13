@@ -1,3 +1,2 @@
-2025/06/13-10:47:48.166 4e74 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Site Characteristics Database/MANIFEST-000001
-2025/06/13-10:47:48.166 4e74 Recovering log #3
-2025/06/13-10:47:48.167 4e74 Reusing old log C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Site Characteristics Database/000003.log 
+2025/06/13-16:34:04.735 4834 Creating DB C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Site Characteristics Database since it was missing.
+2025/06/13-16:34:04.753 4834 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Site Characteristics Database/MANIFEST-000001
