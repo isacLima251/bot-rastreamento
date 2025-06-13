@@ -55,6 +55,9 @@ const startApp = async () => {
         app.delete('/api/pedidos/:id', pedidosController.deletarPedido);
         app.get('/api/pedidos/:id/historico', pedidosController.getHistoricoDoPedido);
         app.post('/api/pedidos/:id/enviar-mensagem', pedidosController.enviarMensagemManual);
+        app.post('/api/pedidos/:id/atualizar-foto', pedidosController.atualizarFotoDoPedido);
+        app.put('/api/pedidos/:id/marcar-como-lido', pedidosController.marcarComoLido);
+
 
         const client = await venom.create({ session: 'automaza-bot', headless: 'new' });
         await whatsappService.iniciarWhatsApp(client);
@@ -93,5 +96,6 @@ const startApp = async () => {
         process.exit(1);
     }
 };
+
 
 startApp();

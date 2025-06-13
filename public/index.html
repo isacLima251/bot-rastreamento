@@ -9,7 +9,6 @@
 </head>
 <body>
     <div class="app-layout">
-        <!-- Barra Lateral de Contactos -->
         <aside class="sidebar">
             <header class="sidebar-header">
                 <h2>Contactos</h2>
@@ -19,11 +18,9 @@
                 <input type="text" id="barra-busca" placeholder="🔎 Buscar por nome ou telefone...">
             </div>
             <div class="contact-list" id="lista-contactos">
-                <!-- A lista de contactos será carregada aqui -->
-            </div>
+                </div>
         </aside>
 
-        <!-- Área de Conteúdo Principal -->
         <main class="main-content" id="main-content-area">
             <div id="chat-window">
                 <div class="placeholder">
@@ -44,7 +41,6 @@
         </main>
     </div>
 
-    <!-- Modal de Adicionar/Editar Pedido -->
     <div id="modal-pedido" class="modal-overlay">
         <div class="modal-content">
             <h3 id="modal-titulo">Adicionar Novo Pedido</h3>
@@ -58,8 +54,11 @@
                     <button type="button" id="btn-modal-cancelar" class="btn-cancelar">Cancelar</button>
                     <button type="submit" id="btn-modal-salvar" class="btn-salvar">Salvar</button>
                 </div>
-            </form>
+                </form>
         </div>
+    </div>
+   <div id="notificacao" class="toast">
+        <p id="notificacao-texto">Mensagem de teste</p>
     </div>
 
     <script src="script.js"></script>

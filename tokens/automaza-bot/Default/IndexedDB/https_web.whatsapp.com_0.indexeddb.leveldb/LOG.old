@@ -1,0 +1,36 @@
+2025/06/13-10:32:42.328 4dd4 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/06/13-10:32:42.328 4dd4 Recovering log #1359
+2025/06/13-10:32:42.337 4dd4 Reusing old log C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/001359.log 
+2025/06/13-10:32:43.512 160c Level-0 table #1386: started
+2025/06/13-10:32:43.518 160c Level-0 table #1386: 288412 bytes OK
+2025/06/13-10:32:43.519 160c Delete type=0 #1359
+2025/06/13-10:32:43.519 160c Manual compaction at level-0 from '\x00,\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00-\x00\x00\x00' @ 0 : 0; will stop at '\x00,\x00\x00\x05' @ 3917076 : 1
+2025/06/13-10:32:43.520 160c Compacting 1@0 + 0@1 files
+2025/06/13-10:32:43.526 160c Generated table #1387@0: 7759 keys, 138630 bytes
+2025/06/13-10:32:43.528 160c Generated table #1388@0: 46 keys, 3348 bytes
+2025/06/13-10:32:43.528 160c Compacted 1@0 + 0@1 files => 141978 bytes
+2025/06/13-10:32:43.529 160c compacted to: files[ 0 2 23 0 0 0 0 ]
+2025/06/13-10:32:43.529 160c Delete type=2 #1386
+2025/06/13-10:32:43.530 4dd4 Manual compaction at level-0 from '\x00,\x00\x00\x05' @ 3917076 : 1 .. '\x00-\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/06/13-10:32:44.458 5ca4 Compacting 1@1 + 2@2 files
+2025/06/13-10:32:44.508 5ca4 Generated table #1389@1: 89663 keys, 2245479 bytes
+2025/06/13-10:32:44.540 5ca4 Generated table #1390@1: 26904 keys, 2189629 bytes
+2025/06/13-10:32:44.542 5ca4 Generated table #1391@1: 50 keys, 34878 bytes
+2025/06/13-10:32:44.542 5ca4 Compacted 1@1 + 2@2 files => 4469986 bytes
+2025/06/13-10:32:44.543 5ca4 compacted to: files[ 0 1 24 0 0 0 0 ]
+2025/06/13-10:32:44.543 5ca4 Delete type=2 #1363
+2025/06/13-10:32:44.543 5ca4 Delete type=2 #1364
+2025/06/13-10:32:44.543 5ca4 Delete type=2 #1387
+2025/06/13-10:32:44.980 5ca4 Compacting 1@1 + 10@2 files
+2025/06/13-10:32:45.025 5ca4 Generated table #1392@1: 31209 keys, 2213540 bytes
+2025/06/13-10:32:45.087 5ca4 Generated table #1393@1: 35484 keys, 2309669 bytes
+2025/06/13-10:32:45.124 5ca4 Generated table #1394@1: 15226 keys, 2248197 bytes
+2025/06/13-10:32:45.146 5ca4 Generated table #1395@1: 7319 keys, 2129054 bytes
+2025/06/13-10:32:45.174 5ca4 Generated table #1396@1: 24407 keys, 2152695 bytes
+2025/06/13-10:32:45.226 5ca4 Generated table #1397@1: 102484 keys, 2253644 bytes
+2025/06/13-10:32:45.276 5ca4 Generated table #1398@1: 99507 keys, 2249900 bytes
+2025/06/13-10:32:45.334 5ca4 Generated table #1399@1: 101960 keys, 2252398 bytes
+2025/06/13-10:32:45.390 5ca4 Generated table #1400@1: 100905 keys, 2252136 bytes
+2025/06/13-10:32:45.428 5ca4 Generated table #1401@1: 71318 keys, 1594039 bytes
+2025/06/13-10:32:45.428 5ca4 Compacted 1@1 + 10@2 files => 21655272 bytes
+2025/06/13-10:32:45.429 5ca4 compacted to: files[ 0 0 24 0 0 0 0 ]

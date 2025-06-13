@@ -11,66 +11,139 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalTituloEl = document.getElementById('modal-titulo');
     const btnModalCancelarEl = document.getElementById('btn-modal-cancelar');
     const formEnviarMensagemEl = document.getElementById('form-enviar-mensagem');
+    const notificacaoEl = document.getElementById('notificacao');
+    const notificacaoTextoEl = document.getElementById('notificacao-texto');
 
     // --- 2. Estado da Aplicação ---
     let todosOsPedidos = [];
     let pedidoAtivoId = null;
+    let debounceTimer;
+    let notificacaoTimer;
 
-    // --- 3. Lógica WebSocket (Tempo Real) ---
+    // --- 3. Função de Notificação ---
+    const showNotification = (message, type = 'error') => {
+        clearTimeout(notificacaoTimer);
+        notificacaoEl.classList.remove('show', 'error', 'success');
+        
+        notificacaoTextoEl.textContent = message;
+        notificacaoEl.classList.add(type);
+        notificacaoEl.classList.add('show');
+
+        notificacaoTimer = setTimeout(() => {
+            notificacaoEl.classList.remove('show');
+        }, 4000);
+    };
+
+    // --- 4. Lógica WebSocket (Tempo Real) ---
     const connectWebSocket = () => {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
         const ws = new WebSocket(`${wsProtocol}://${window.location.host}`);
-
         ws.onopen = () => console.log('🔗 Conexão WebSocket estabelecida.');
-
+        
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log('🔔 Notificação recebida:', data);
+            console.log('🔔 Notificação WebSocket recebida:', data);
             
-            // Quando uma nova mensagem chegar, busca os dados mais recentes e actualiza a interface
             if (data.type === 'nova_mensagem') {
-                fetchErenderizarTudo();
+                const pedidoAfetado = todosOsPedidos.find(p => p.id === data.pedidoId);
+                
+                if (pedidoAfetado) {
+                    if (pedidoAfetado.id !== pedidoAtivoId) {
+                        pedidoAfetado.mensagensNaoLidas = (pedidoAfetado.mensagensNaoLidas || 0) + 1;
+                        renderizarListaDeContactos();
+                    } else {
+                        fetchErenderizarTudo();
+                    }
+                } else {
+                    fetchErenderizarTudo();
+                }
             }
         };
 
         ws.onclose = () => {
-            console.log('🔌 Conexão WebSocket fechada. A tentar reconectar em 5 segundos...');
+            console.log('🔌 Conexão WebSocket fechada. A tentar reconectar...');
             setTimeout(connectWebSocket, 5000);
         };
     };
 
-    // --- 4. Funções de Renderização (Desenhar na Tela) ---
+    // --- 5. Funções de Renderização e API ---
 
     const renderizarListaDeContactos = () => {
         const termoBusca = barraBuscaEl.value.toLowerCase();
-        const filtrados = todosOsPedidos.filter(p => p.nome.toLowerCase().includes(termoBusca) || p.telefone.includes(termoBusca));
+        const filtrados = todosOsPedidos.filter(p => 
+            (p.nome && p.nome.toLowerCase().includes(termoBusca)) || 
+            (p.telefone && p.telefone.includes(termoBusca))
+        );
         
         listaContactosEl.innerHTML = '';
         if (filtrados.length === 0) {
             listaContactosEl.innerHTML = `<p class="info-mensagem">${termoBusca ? `Nenhum resultado para "${termoBusca}"` : 'Nenhum contacto.'}</p>`;
             return;
         }
-        filtrados.forEach(p => {
+
+        filtrados.sort((a, b) => (b.mensagensNaoLidas || 0) - (a.mensagensNaoLidas || 0));
+
+        filtrados.forEach(pedido => {
             const item = document.createElement('div');
             item.className = 'contact-item';
-            item.dataset.id = p.id;
-            if (p.id === pedidoAtivoId) item.classList.add('active');
-            item.innerHTML = `<div class="info"><h4>${p.nome}</h4><p>${p.statusInterno || 'Novo Pedido'}</p></div>`;
+            item.dataset.id = pedido.id;
+            if (pedido.id === pedidoAtivoId) item.classList.add('active');
+
+            const primeiraLetra = pedido.nome ? pedido.nome.charAt(0).toUpperCase() : '?';
+            const fotoHtml = pedido.fotoPerfilUrl
+                ? `<img src="${pedido.fotoPerfilUrl}" alt="Foto de ${pedido.nome}" onerror="this.style.display='none'; this.parentElement.querySelector('.avatar-fallback').style.display='flex';">
+                   <div class="avatar-fallback" style="display: none;">${primeiraLetra}</div>`
+                : `<div class="avatar-fallback">${primeiraLetra}</div>`;
+            
+            const bolinhaDisplay = pedido.mensagensNaoLidas > 0 ? 'flex' : 'none';
+            const bolinhaHtml = `<div class="unread-indicator" style="display: ${bolinhaDisplay};"></div>`;
+
+            item.innerHTML = `
+                <div class="avatar-container">
+                    ${fotoHtml}
+                </div>
+                <div class="info">
+                    <h4>${pedido.nome}</h4>
+                    <p>${pedido.statusInterno || 'Novo Pedido'}</p>
+                </div>
+                ${bolinhaHtml}
+            `;
             listaContactosEl.appendChild(item);
         });
     };
-
-    const renderizarDetalhesDoPedido = async (pedido) => {
+    
+    const selecionarPedidoErenderizarDetalhes = async (pedido) => {
+        if (!pedido) return;
+        
+        if (pedido.mensagensNaoLidas > 0) {
+            try {
+                await fetch(`/api/pedidos/${pedido.id}/marcar-como-lido`, { method: 'PUT' });
+                pedido.mensagensNaoLidas = 0;
+            } catch (error) {
+                console.error("Falha ao marcar como lido:", error);
+            }
+        }
+        
         pedidoAtivoId = pedido.id;
+        
+        // --- CORREÇÃO APLICADA AQUI ---
+        // O botão "Atualizar Foto" foi movido para dentro da string do innerHTML.
         chatWindowEl.innerHTML = `
-            <div class="detalhes-header"><h3>${pedido.nome} (#${pedido.id})</h3><button class="btn-editar-main">Editar</button></div>
+            <div class="detalhes-header">
+                <h3>${pedido.nome} (#${pedido.id})</h3>
+                <div>
+                    <button class="btn-editar-main">Editar</button>
+                    <button class="btn-atualizar-foto" data-id="${pedido.id}">Atualizar Foto</button>
+                </div>
+            </div>
             <div class="detalhes-body"><p><strong>Telefone:</strong> ${pedido.telefone}</p><p><strong>Produto:</strong> ${pedido.produto || 'N/A'}</p><p><strong>Rastreio:</strong> ${pedido.codigoRastreio || 'Nenhum'}</p></div>
             <div class="chat-feed" id="chat-feed"><p class="info-mensagem">A carregar histórico...</p></div>
         `;
         chatFooterEl.classList.add('active');
         formEnviarMensagemEl.querySelector('input').disabled = false;
         formEnviarMensagemEl.querySelector('button').disabled = false;
-        renderizarListaDeContactos();
+        
+        renderizarListaDeContactos(); 
 
         try {
             const response = await fetch(`/api/pedidos/${pedido.id}/historico`);
@@ -83,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 historico.forEach(msg => {
                     const msgDiv = document.createElement('div');
                     msgDiv.className = `chat-message ${msg.origem === 'cliente' ? 'recebido' : 'enviado'}`;
-                    const dataFormatada = new Date(msg.data_envio).toLocaleString('pt-BR');
+                    const dataFormatada = new Date(msg.data_envio).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
                     msgDiv.innerHTML = `<p>${msg.mensagem.replace(/\n/g, '<br>')}</p><span class="timestamp">${dataFormatada}</span>`;
                     chatFeedEl.appendChild(msgDiv);
                 });
@@ -93,8 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('chat-feed').innerHTML = '<p class="info-mensagem" style="color: red;">Erro ao carregar histórico.</p>';
         }
     };
-    
-    // --- 5. Função Mestra de Sincronização e API ---
+
     const fetchErenderizarTudo = async () => {
         try {
             const response = await fetch('/api/pedidos');
@@ -102,15 +174,14 @@ document.addEventListener('DOMContentLoaded', () => {
             todosOsPedidos = (await response.json()).data || [];
             
             renderizarListaDeContactos();
-            // Se um pedido estava ativo, tenta re-renderizá-lo para manter a consistência
+
             if (pedidoAtivoId) {
                 const pedidoAtivo = todosOsPedidos.find(p => p.id === pedidoAtivoId);
                 if (pedidoAtivo) {
-                    await renderizarDetalhesDoPedido(pedidoAtivo);
+                    await selecionarPedidoErenderizarDetalhes(pedidoAtivo);
                 } else {
-                    // O pedido foi apagado, volta ao estado inicial
                     pedidoAtivoId = null;
-                    chatWindowEl.innerHTML = `<div class="placeholder"><h3>Selecione um contacto</h3><p>Escolha um contacto para ver os detalhes e o histórico.</p></div>`;
+                    chatWindowEl.innerHTML = `<div class="placeholder"><h3>Selecione um contacto</h3><p>O contacto anterior não foi encontrado.</p></div>`;
                     chatFooterEl.classList.remove('active');
                 }
             }
@@ -118,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Falha ao buscar e renderizar:", e);
         }
     };
-    
+
     // --- 6. Funções do Modal ---
     const abrirModal = (pedido = null) => {
         formPedidoEl.reset();
@@ -126,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formPedidoEl.querySelector('#pedido-id').value = '';
         if (pedido) {
             modalTituloEl.textContent = 'Editar Pedido';
+            formPedidoEl.querySelector('#pedido-id').value = pedido.id;
             Object.keys(pedido).forEach(key => {
                 const input = formPedidoEl.querySelector(`[name="${key}"]`);
                 if (input) input.value = pedido[key] || '';
@@ -143,20 +215,24 @@ document.addEventListener('DOMContentLoaded', () => {
     formPedidoEl.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = formPedidoEl.querySelector('#pedido-id').value;
-        const dados = Object.fromEntries(new FormData(formPedidoEl).entries());
+        const dados = Object.fromEntries(new FormData(e.target).entries());
         const url = id ? `/api/pedidos/${id}` : '/api/pedidos';
         const method = id ? 'PUT' : 'POST';
         delete dados.id;
         try {
             const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
-            if (!response.ok) throw new Error('Falha ao salvar.');
+            const resultado = await response.json();
+            if (!response.ok) throw new Error(resultado.error || 'Falha ao salvar.');
+            
             fecharModal();
+            showNotification(resultado.message || 'Operação realizada com sucesso!', 'success');
             await fetchErenderizarTudo();
-        } catch (error) { alert(error.message); }
+        } catch (error) { 
+            showNotification(error.message, 'error');
+        }
     });
     
     barraBuscaEl.addEventListener('input', () => {
-        let debounceTimer;
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(renderizarListaDeContactos, 300);
     });
@@ -166,14 +242,44 @@ document.addEventListener('DOMContentLoaded', () => {
         if (item) {
             const pedidoId = parseInt(item.dataset.id, 10);
             const pedido = todosOsPedidos.find(p => p.id === pedidoId);
-            if (pedido) await renderizarDetalhesDoPedido(pedido);
+            if (pedido) {
+                await selecionarPedidoErenderizarDetalhes(pedido);
+            }
         }
     });
 
-    mainContentAreaEl.addEventListener('click', (e) => {
+    // Event listener unificado para a área principal
+    mainContentAreaEl.addEventListener('click', async (e) => {
+        // Lógica para o botão "Editar"
         if (e.target.classList.contains('btn-editar-main')) {
             const pedido = todosOsPedidos.find(p => p.id === pedidoAtivoId);
             if (pedido) abrirModal(pedido);
+        }
+
+        // Lógica para o botão "Atualizar Foto"
+        if (e.target.classList.contains('btn-atualizar-foto')) {
+            const botao = e.target;
+            const pedidoId = parseInt(botao.dataset.id, 10);
+            if (!pedidoId) return;
+
+            botao.textContent = 'A atualizar...';
+            botao.disabled = true;
+
+            try {
+                const response = await fetch(`/api/pedidos/${pedidoId}/atualizar-foto`, { method: 'POST' });
+                const resultado = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(resultado.error || 'Falha ao buscar foto.');
+                }
+                showNotification('Foto de perfil atualizada com sucesso!', 'success');
+                await fetchErenderizarTudo();
+
+            } catch (error) {
+                showNotification(error.message, 'error');
+            } finally {
+                // O botão será recriado na renderização, então não precisamos reativá-lo aqui.
+            }
         }
     });
 
@@ -183,15 +289,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const mensagem = inputMensagem.value.trim();
         if (!mensagem || !pedidoAtivoId) return;
         try {
-            await fetch(`/api/pedidos/${pedidoAtivoId}/enviar-mensagem`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mensagem }) });
+            const response = await fetch(`/api/pedidos/${pedidoAtivoId}/enviar-mensagem`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mensagem }) });
+            if (!response.ok) throw new Error('Falha ao enviar mensagem.');
             inputMensagem.value = '';
+            
             const pedidoAtivo = todosOsPedidos.find(p => p.id === pedidoAtivoId);
-            await renderizarDetalhesDoPedido(pedidoAtivo);
-        } catch (error) { alert(error.message); }
+            await selecionarPedidoErenderizarDetalhes(pedidoAtivo);
+        } catch (error) { 
+            showNotification(error.message, 'error');
+        }
     });
 
     // --- 8. Inicialização ---
-    fetchErenderizarTudo(); // Busca e renderiza tudo assim que a página carrega
-    connectWebSocket();   // Inicia a conexão para tempo real
-    setInterval(fetchErenderizarTudo, 60000); // Sincroniza tudo a cada 60 segundos por segurança
+    fetchErenderizarTudo();
+    connectWebSocket();
 });

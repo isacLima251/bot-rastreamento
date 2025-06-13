@@ -1,5 +1,3 @@
-// src/services/pedidoService.js
-
 /**
  * Busca todos os pedidos do banco de dados.
  * @param {object} db A instância do banco de dados.
@@ -36,51 +34,38 @@ const getPedidoById = (db, id) => {
 };
 
 /**
- * Busca um pedido pelo número de telefone, tratando variações (com ou sem 55, etc.).
+ * Busca um pedido pelo número de telefone, tratando variações (com ou sem 55).
  * @param {object} db A instância do banco de dados.
- * @param {string} telefone O número de telefone do remetente (ex: 5582999991111).
+ * @param {string} telefone O número de telefone.
  * @returns {Promise<object|null>} O pedido encontrado ou nulo.
  */
 const findPedidoByTelefone = (db, telefone) => {
     return new Promise((resolve, reject) => {
-        // Tenta encontrar uma correspondência exata primeiro
-        db.get("SELECT * FROM pedidos WHERE telefone = ?", [telefone], (err, row) => {
-            if (err) return reject(err);
-            if (row) {
-                // Encontrou uma correspondência exata, retorna imediatamente
-                return resolve(row);
+        const telefoneCom55 = telefone.startsWith('55') ? telefone : `55${telefone}`;
+        const telefoneSem55 = telefone.startsWith('55') ? telefone.substring(2) : telefone;
+        const sql = "SELECT * FROM pedidos WHERE telefone = ? OR telefone = ?";
+        
+        db.get(sql, [telefoneCom55, telefoneSem55], (err, row) => {
+            if (err) {
+                console.error(`Erro ao buscar pedido por telefone ${telefone}`, err);
+                return reject(err);
             }
-            
-            // Se não encontrou e o número tem o 55, tenta buscar sem ele
-            if (telefone.startsWith('55') && telefone.length > 11) {
-                const telefoneSem55 = telefone.substring(2);
-                db.get("SELECT * FROM pedidos WHERE telefone = ?", [telefoneSem55], (err, row) => {
-                    if (err) return reject(err);
-                    resolve(row);
-                });
-            } else {
-                // Se o número não tem 55, tenta buscar com ele
-                db.get("SELECT * FROM pedidos WHERE telefone = ?", [`55${telefone}`], (err, row) => {
-                     if (err) return reject(err);
-                     resolve(row);
-                });
-            }
+            resolve(row);
         });
     });
 };
 
 /**
- * Actualiza um ou mais campos de um pedido específico no banco de dados.
+ * Atualiza um ou mais campos de um pedido específico.
  * @param {object} db A instância do banco de dados.
- * @param {number} pedidoId O ID do pedido a ser actualizado.
- * @param {object} campos O objeto com os campos e valores a serem actualizados.
+ * @param {number} pedidoId O ID do pedido.
+ * @param {object} campos O objeto com os campos e valores a serem atualizados.
  * @returns {Promise<{changes: number}>}
  */
 const updateCamposPedido = (db, pedidoId, campos) => {
     if (!campos || Object.keys(campos).length === 0) {
         return Promise.resolve({ changes: 0 });
     }
-
     const fields = Object.keys(campos).map(k => `${k} = ?`).join(', ');
     const values = [...Object.values(campos), pedidoId];
     const sql = `UPDATE pedidos SET ${fields} WHERE id = ?`;
@@ -88,7 +73,7 @@ const updateCamposPedido = (db, pedidoId, campos) => {
     return new Promise((resolve, reject) => {
         db.run(sql, values, function(err) {
             if (err) {
-                console.error(`Erro ao actualizar pedido ${pedidoId}`, err);
+                console.error(`Erro ao atualizar pedido ${pedidoId}`, err);
                 return reject(err);
             }
             resolve({ changes: this.changes });
@@ -103,6 +88,7 @@ const updateCamposPedido = (db, pedidoId, campos) => {
  * @param {string} mensagem O conteúdo da mensagem.
  * @param {string} tipoMensagem O tipo da mensagem ('manual', 'postado', etc.).
  * @param {string} origem A origem da mensagem ('bot' ou 'cliente').
+ * @returns {Promise<{id: number}>}
  */
 const addMensagemHistorico = (db, pedidoId, mensagem, tipoMensagem, origem) => {
     const sql = `INSERT INTO historico_mensagens (pedido_id, mensagem, tipo_mensagem, origem) VALUES (?, ?, ?, ?)`;
@@ -136,11 +122,51 @@ const getHistoricoPorPedidoId = (db, pedidoId) => {
     });
 };
 
+/**
+ * Incrementa o contador de mensagens não lidas para um pedido.
+ * @param {object} db A instância do banco de dados.
+ * @param {number} pedidoId O ID do pedido.
+ * @returns {Promise<{changes: number}>}
+ */
+const incrementarNaoLidas = (db, pedidoId) => {
+    return new Promise((resolve, reject) => {
+        const sql = 'UPDATE pedidos SET mensagensNaoLidas = mensagensNaoLidas + 1 WHERE id = ?';
+        db.run(sql, [pedidoId], function (err) {
+            if (err) {
+                console.error("Erro ao incrementar mensagens não lidas:", err.message);
+                return reject(err);
+            }
+            resolve({ changes: this.changes });
+        });
+    });
+};
+
+/**
+ * Zera o contador de mensagens não lidas para um pedido.
+ * @param {object} db A instância do banco de dados.
+ * @param {number} pedidoId O ID do pedido.
+ * @returns {Promise<{changes: number}>}
+ */
+const marcarComoLido = (db, pedidoId) => {
+    return new Promise((resolve, reject) => {
+        const sql = 'UPDATE pedidos SET mensagensNaoLidas = 0 WHERE id = ?';
+        db.run(sql, [pedidoId], function (err) {
+            if (err) {
+                console.error("Erro ao marcar mensagens como lidas:", err.message);
+                return reject(err);
+            }
+            resolve({ changes: this.changes });
+        });
+    });
+};
+
 module.exports = {
     getAllPedidos,
     getPedidoById,
     findPedidoByTelefone,
     updateCamposPedido,
     addMensagemHistorico,
-    getHistoricoPorPedidoId
+    getHistoricoPorPedidoId,
+    incrementarNaoLidas,
+    marcarComoLido
 };
