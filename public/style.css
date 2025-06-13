@@ -527,3 +527,51 @@ body {
     gap: 15px;
     justify-content: center;
 }
+
+/* Em: public/style.css */
+
+/* --- Estilos Melhorados para Botões de Configuração --- */
+.settings-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    width: 100%;
+    max-width: 250px; /* Limita a largura dos botões */
+    margin-top: 25px;
+}
+
+.btn-settings-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    color: white;
+}
+
+.btn-settings-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.btn-settings-action.connect {
+    background-color: var(--success-color);
+}
+.btn-settings-action.connect:hover {
+    background-color: #218838;
+}
+
+.btn-settings-action.disconnect {
+    background-color: var(--error-color);
+}
+.btn-settings-action.disconnect:hover {
+    background-color: #c82333;
+}

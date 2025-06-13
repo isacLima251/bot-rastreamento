@@ -60,29 +60,26 @@ async function connectToWhatsApp() {
     broadcastStatus('CONNECTING');
 
     venom.create(
-        // --- ESTRUTURA CORRIGIDA: Todas as opções em um único objeto ---
         {
             session: 'automaza-bot',
             useChrome: false,
-            headless: 'new', // ou false para depuração
+            headless: 'new', // Mantenha como 'false' por enquanto para facilitar a depuração
             browserArgs: ['--no-sandbox', '--disable-setuid-sandbox']
         },
         (base64Qr, asciiQR, attempts, urlCode) => {
             console.log('QR Code recebido. Envie para o painel.');
             broadcastStatus('QR_CODE', { qrCode: base64Qr });
         },
+        // O callback de status agora serve mais para LOGs, a lógica principal vai para o .then()
         (statusSession, session) => {
-            console.log('Status da sessão:', statusSession);
-            if (statusSession === 'isLogged' || statusSession === 'inChat') {
-                broadcastStatus('CONNECTED');
-            } else {
-                broadcastStatus('DISCONNECTED');
-                venomClient = null;
-            }
+            console.log('[Status da Sessão Durante Conexão]', statusSession);
         }
     )
     .then((client) => {
-        start(client);
+        console.log('✅ Cliente Venom criado com SUCESSO. Iniciando rotinas...');
+        // AGORA SIM, AQUI É O LUGAR SEGURO PARA DIZER QUE ESTÁ CONECTADO
+        start(client); // Chama a função que ativa o onMessage
+        broadcastStatus('CONNECTED'); // E notifica o frontend
     })
     .catch((erro) => {
         console.error('❌ Erro DETALHADO ao criar cliente Venom:', erro);
