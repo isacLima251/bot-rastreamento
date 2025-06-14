@@ -1,2 +1,3 @@
-2025/06/13-16:56:28.467 5630 Creating DB C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb since it was missing.
-2025/06/13-16:56:28.487 5630 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb/MANIFEST-000001
+2025/06/14-11:37:50.538 4f64 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb/MANIFEST-000001
+2025/06/14-11:37:50.542 4f64 Recovering log #4
+2025/06/14-11:37:50.543 4f64 Reusing old log C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\Local Storage\leveldb/000004.log 

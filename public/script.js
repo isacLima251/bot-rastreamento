@@ -14,16 +14,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const notificacaoEl = document.getElementById('notificacao');
     const notificacaoTextoEl = document.getElementById('notificacao-texto');
 
-    // --- ADICIONADO: Seletores para a nova UI de Configurações ---
+    // Seletores para a UI de Configurações
     const chatViewEl = document.getElementById('chat-view');
     const settingsViewEl = document.getElementById('settings-view');
     const btnSettingsEl = document.getElementById('btn-settings');
     const statusIndicatorEl = document.getElementById('status-whatsapp');
-    const statusTextEl = statusIndicatorEl.querySelector('.status-text');
-    const settingsStatusTextEl = document.getElementById('settings-status-text');
     const qrCodeContainerEl = document.getElementById('qr-code-container');
     const btnConectarEl = document.getElementById('btn-conectar');
     const btnDesconectarEl = document.getElementById('btn-desconectar');
+    
+    // --- CORREÇÃO: Adicionando os seletores que faltavam para o status melhorado ---
+    const statusTextLabelEl = document.getElementById('status-text-label');
+    const statusBotInfoEl = document.getElementById('status-bot-info');
+    const botAvatarContainerEl = document.getElementById('bot-avatar-container');
+    const botAvatarImgEl = document.getElementById('bot-avatar-img');
 
 
     // --- 2. Estado da Aplicação ---
@@ -31,21 +35,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let pedidoAtivoId = null;
     let debounceTimer;
     let notificacaoTimer;
+    let currentWhatsappStatus = 'DISCONNECTED'; // --- CORREÇÃO: Adicionando a variável de estado ---
 
-    // --- 3. Funções de UI e Notificação ---
+
+       // --- 3. Funções de UI e Notificação ---
     const showNotification = (message, type = 'error') => {
         clearTimeout(notificacaoTimer);
         notificacaoEl.classList.remove('show', 'error', 'success');
-        
         notificacaoTextoEl.textContent = message;
         notificacaoEl.classList.add(type);
         notificacaoEl.classList.add('show');
-
         notificacaoTimer = setTimeout(() => {
             notificacaoEl.classList.remove('show');
         }, 4000);
     };
 
+
+   
     function showView(viewName) {
         chatViewEl.classList.add('hidden');
         settingsViewEl.classList.add('hidden');
@@ -53,34 +59,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateStatusUI(status, data = {}) {
-        statusIndicatorEl.className = 'status-indicator';
-        statusIndicatorEl.classList.add(status.toLowerCase());
-        
-        const statusMap = {
-            DISCONNECTED: 'Desconectado',
-            CONNECTING: 'A conectar...',
-            CONNECTED: 'Conectado',
-            QR_CODE: 'Aguardando QR Code'
-        };
-        statusTextEl.textContent = statusMap[status] || 'Desconhecido';
-        settingsStatusTextEl.textContent = statusMap[status] || 'Desconhecido';
+    currentWhatsappStatus = status;
+    statusIndicatorEl.className = 'status-indicator';
+    statusIndicatorEl.classList.add(status.toLowerCase());
+    
+    const statusMap = {
+        DISCONNECTED: 'Desconectado',
+        CONNECTING: 'A conectar...',
+        CONNECTED: 'Conectado',
+        QR_CODE: 'Aguardando QR Code'
+    };
+    statusTextLabelEl.textContent = statusMap[status] || 'Desconhecido';
 
-        qrCodeContainerEl.innerHTML = '';
-        if (status === 'QR_CODE' && data.qrCode) {
-            qrCodeContainerEl.innerHTML = `<p>Escaneie o QR Code com seu celular:</p><img src="${data.qrCode}" alt="QR Code do WhatsApp">`;
+    qrCodeContainerEl.innerHTML = '';
+    botAvatarContainerEl.classList.add('hidden');
+    statusBotInfoEl.textContent = '';
+
+    if (status === 'QR_CODE' && data.qrCode) {
+        qrCodeContainerEl.innerHTML = `<p>Escaneie o QR Code com seu celular:</p><img src="${data.qrCode}" alt="QR Code do WhatsApp">`;
+    } else if (status === 'CONNECTED' && data.botInfo) {
+        // Exibe os dados do bot
+        statusBotInfoEl.textContent = `${data.botInfo.nome || ''} (${data.botInfo.numero})`;
+        if (data.botInfo.fotoUrl) {
+            botAvatarImgEl.src = data.botInfo.fotoUrl;
+            botAvatarContainerEl.classList.remove('hidden');
         }
-
-        btnConectarEl.style.display = (status === 'DISCONNECTED') ? 'inline-block' : 'none';
-        btnDesconectarEl.style.display = (status === 'CONNECTED') ? 'inline-block' : 'none';
     }
 
-    // --- 4. Lógica WebSocket (Tempo Real) ---
-    const connectWebSocket = () => {
+    btnConectarEl.style.display = (status === 'DISCONNECTED') ? 'inline-block' : 'none';
+    btnDesconectarEl.style.display = (status === 'CONNECTED') ? 'inline-block' : 'none';
+}
+
+const connectWebSocket = () => {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
         const ws = new WebSocket(`${wsProtocol}://${window.location.host}`);
         ws.onopen = () => console.log('🔗 Conexão WebSocket estabelecida.');
         
-        // --- CORRIGIDO: Lógica do onmessage completa ---
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             console.log('🔔 Notificação WebSocket recebida:', data);
@@ -94,9 +108,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         fetchErenderizarTudo();
                     }
-                } else {
-                    fetchErenderizarTudo();
                 }
+            } else if (data.type === 'novo_contato') {
+                showNotification(`Novo contato recebido: ${data.pedido.nome}`, 'success');
+                fetchErenderizarTudo();
             } else if (data.type === 'status_update') {
                 updateStatusUI(data.status, data);
             }
@@ -231,8 +246,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 6. Funções do Modal ---
     const abrirModal = (pedido = null) => {
+        // --- CORREÇÃO: Adicionando a verificação de status ---
+        if (!pedido && currentWhatsappStatus !== 'CONNECTED') {
+            showNotification('É preciso estar conectado ao WhatsApp para adicionar um novo contato.', 'error');
+            return;
+        }
+
         formPedidoEl.reset();
-        
         modalTituloEl.textContent = 'Adicionar Novo Pedido';
         formPedidoEl.querySelector('#pedido-id').value = '';
         if (pedido) {
@@ -246,6 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalPedidoEl.classList.add('active');
     };
     const fecharModal = () => modalPedidoEl.classList.remove('active');
+
 
     // --- 7. Event Listeners ---
     btnAdicionarNovoEl.addEventListener('click', () => abrirModal());
@@ -333,21 +354,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     formEnviarMensagemEl.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const inputMensagem = e.target.querySelector('#input-mensagem');
-        const mensagem = inputMensagem.value.trim();
-        if (!mensagem || !pedidoAtivoId) return;
-        try {
-            const response = await fetch(`/api/pedidos/${pedidoAtivoId}/enviar-mensagem`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mensagem }) });
-            if (!response.ok) throw new Error('Falha ao enviar mensagem.');
-            inputMensagem.value = '';
-            
-            const pedidoAtivo = todosOsPedidos.find(p => p.id === pedidoAtivoId);
-            await selecionarPedidoErenderizarDetalhes(pedidoAtivo);
-        } catch (error) { 
-            showNotification(error.message, 'error');
-        }
-    });
+    e.preventDefault();
+    // --- CORREÇÃO: Adicionando a verificação de status ---
+    if (currentWhatsappStatus !== 'CONNECTED') {
+        showNotification('O WhatsApp precisa estar conectado para enviar mensagens.', 'error');
+        return;
+    }
+
+    const inputMensagem = e.target.querySelector('#input-mensagem');
+    const mensagem = inputMensagem.value.trim();
+    if (!mensagem || !pedidoAtivoId) return;
+    try {
+        const response = await fetch(`/api/pedidos/${pedidoAtivoId}/enviar-mensagem`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mensagem }) });
+        if (!response.ok) throw new Error('Falha ao enviar mensagem.');
+        inputMensagem.value = '';
+        
+        const pedidoAtivo = todosOsPedidos.find(p => p.id === pedidoAtivoId);
+        await selecionarPedidoErenderizarDetalhes(pedidoAtivo);
+    } catch (error) { 
+        showNotification(error.message, 'error');
+    }
+});
 
     // --- 8. Inicialização ---
     fetchErenderizarTudo();

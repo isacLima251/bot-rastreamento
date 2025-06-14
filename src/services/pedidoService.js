@@ -1,20 +1,42 @@
 // --- CORREÇÃO: Importando o whatsappService ---
 const whatsappService = require('./whatsappService');
 
-// --- CORREÇÃO: Adicionando a função de ajuda que faltava ---
 /**
- * Normaliza um número de telefone para o formato internacional brasileiro (55 + DDD + Número).
+ * NORMALIZADOR DE TELEFONE DEFINITIVO (trata o 9º dígito)
+ * Converte qualquer número de celular brasileiro para o formato padrão 55DDD9XXXXXXXX.
+ * @param {string} telefoneRaw O número em qualquer formato.
+ * @returns {string|null} O número 100% normalizado ou nulo se for inválido.
  */
 function normalizeTelefone(telefoneRaw) {
-    if (!telefoneRaw) return '';
-    const digitos = String(telefoneRaw).replace(/\D/g, '');
-    if (digitos.startsWith('55') && (digitos.length === 12 || digitos.length === 13)) {
-        return digitos;
+    if (!telefoneRaw) return null;
+    // 1. Remove tudo que não for dígito
+    let digitos = String(telefoneRaw).replace(/\D/g, '');
+
+    // 2. Se tiver '55' no início, remove para analisar o número local
+    if (digitos.startsWith('55')) {
+        digitos = digitos.substring(2);
     }
-    if (digitos.length === 10 || digitos.length === 11) {
-        return `55${digitos}`;
+
+    // 3. Um número local válido no Brasil tem 10 (DDD+8) ou 11 (DDD+9) dígitos
+    if (digitos.length < 10 || digitos.length > 11) {
+        return null; // Formato inválido
     }
-    return digitos;
+
+    const ddd = digitos.substring(0, 2);
+    let numeroBase = digitos.substring(2);
+
+    // 4. A MÁGICA: Se o número base tem 8 dígitos e é um celular, adiciona o '9'
+    if (numeroBase.length === 8 && ['6','7','8','9'].includes(numeroBase[0])) {
+        numeroBase = '9' + numeroBase;
+    }
+
+    // 5. Se o número final não tem 9 dígitos, não é um celular válido
+    if (numeroBase.length !== 9) {
+        return null;
+    }
+
+    // 6. Retorna o número no formato canônico e garantido
+    return `55${ddd}${numeroBase}`;
 }
 
 
@@ -53,22 +75,25 @@ const getPedidoById = (db, id) => {
  */
 const findPedidoByTelefone = (db, telefone) => {
     return new Promise((resolve, reject) => {
+        // A partir de agora, a busca é simples, pois o número sempre será normalizado da mesma forma
         const telefoneNormalizado = normalizeTelefone(telefone);
-        const telefoneCom55 = telefoneNormalizado.startsWith('55') ? telefoneNormalizado : `55${telefoneNormalizado}`;
-        const telefoneSem55 = telefoneNormalizado.startsWith('55') ? telefoneNormalizado.substring(2) : telefoneNormalizado;
         
-        const sql = "SELECT * FROM pedidos WHERE telefone = ? OR telefone = ?";
+        if (!telefoneNormalizado) {
+            // Se o número de telefone de entrada for inválido, não há como encontrar.
+            return resolve(null);
+        }
         
-        db.get(sql, [telefoneCom55, telefoneSem55], (err, row) => {
+        const sql = "SELECT * FROM pedidos WHERE telefone = ?";
+        
+        db.get(sql, [telefoneNormalizado], (err, row) => {
             if (err) {
-                console.error(`Erro ao buscar pedido por telefone ${telefone}`, err);
+                console.error(`Erro ao buscar pedido por telefone (normalizado) ${telefoneNormalizado}`, err);
                 return reject(err);
             }
             resolve(row);
         });
     });
 };
-
 /**
  * Atualiza um ou mais campos de um pedido específico.
  */
@@ -158,36 +183,40 @@ const marcarComoLido = (db, pedidoId) => {
 /**
  * Cria um novo pedido no banco de dados.
  */
-const criarPedido = (db, dadosPedido) => {
+const criarPedido = (db, dadosPedido, client) => {
     return new Promise(async (resolve, reject) => {
         const { nome, telefone, produto, codigoRastreio } = dadosPedido;
-
         const telefoneValidado = normalizeTelefone(telefone);
+
         if (!telefoneValidado || !nome) {
-            return reject(new Error("Nome e telefone são obrigatórios e válidos."));
+            return reject(new Error("Nome e um número de celular válido são obrigatórios."));
         }
 
-        const fotoUrl = await whatsappService.getProfilePicUrl(telefoneValidado);
+        let fotoUrl = null;
+        if (client) { // Só tenta buscar a foto se o client do venom for passado
+            try {
+                const contatoId = `${telefoneValidado}@c.us`;
+                console.log(`[CRIAR PEDIDO] Buscando foto para o contatoId: ${contatoId}`);
+                fotoUrl = await client.getProfilePicFromServer(contatoId);
+                console.log(`[CRIAR PEDIDO] Resultado da busca (fotoUrl):`, fotoUrl);
+            } catch (e) {
+                console.warn(`Não foi possível obter a foto para o novo contato ${telefoneValidado}.`);
+                fotoUrl = null;
+            }
+        }
         
         const sql = 'INSERT INTO pedidos (nome, telefone, produto, codigoRastreio, fotoPerfilUrl) VALUES (?, ?, ?, ?, ?)';
         const params = [nome, telefoneValidado, produto || null, codigoRastreio || null, fotoUrl];
         
         db.run(sql, params, function (err) {
-            if (err) {
-                return reject(err);
-            }
-            
+            if (err) return reject(err);
             resolve({
-                id: this.lastID,
-                nome,
-                telefone: telefoneValidado,
-                produto,
-                codigoRastreio,
-                fotoPerfilUrl: fotoUrl
+                id: this.lastID, nome, telefone: telefoneValidado, produto, codigoRastreio, fotoPerfilUrl: fotoUrl
             });
         });
     });
 };
+
 
 module.exports = {
     getAllPedidos,

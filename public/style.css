@@ -445,6 +445,7 @@ body {
     display: flex;
     gap: 10px;
 }
+
 .btn-icon {
     background-color: transparent;
     border: none;
@@ -458,36 +459,45 @@ body {
     justify-content: center;
     transition: background-color 0.2s, color 0.2s;
 }
+
 .btn-icon:hover {
     background-color: var(--hover-bg);
     color: var(--text-color);
 }
+
 #btn-adicionar-novo {
     background-color: var(--primary-color);
     color: white;
     font-size: 1.8rem;
     padding-bottom: 4px;
 }
+
 #btn-adicionar-novo:hover {
     background-color: #0b78c2;
 }
 
-/* --- Indicador de Status --- */
+/* --- Indicador de Status Melhorado --- */
 .status-indicator {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
+    padding: 10px 16px;
     font-weight: 500;
     border-bottom: 1px solid var(--border-color);
     transition: color 0.3s, background-color 0.3s;
 }
+
+.status-light {
+    padding-top: 2px;
+}
+
 .status-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
     transition: background-color 0.3s;
 }
+
 .status-indicator.disconnected { color: var(--error-color); }
 .status-indicator.disconnected .status-dot { background-color: var(--error-color); }
 
@@ -497,10 +507,42 @@ body {
 .status-indicator.connecting { color: #f0ad4e; }
 .status-indicator.connecting .status-dot { background-color: #f0ad4e; }
 
+.status-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+#status-text-label {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+#status-bot-info {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+#bot-avatar-container {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+#bot-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 /* --- Tela de Configurações --- */
 .hidden {
     display: none !important;
 }
+
 #settings-view {
     padding: 30px;
     display: flex;
@@ -508,36 +550,29 @@ body {
     align-items: center;
     gap: 20px;
 }
+
 #settings-status-container {
     background-color: var(--sidebar-bg);
     padding: 25px;
     border-radius: 8px;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
+
 #qr-code-container img {
     max-width: 100%;
     height: auto;
     margin: 20px 0;
     border: 5px solid white;
 }
-.settings-actions {
-    margin-top: 20px;
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-}
 
-/* Em: public/style.css */
-
-/* --- Estilos Melhorados para Botões de Configuração --- */
 .settings-actions {
     display: flex;
     flex-direction: column;
     gap: 15px;
     align-items: center;
     width: 100%;
-    max-width: 250px; /* Limita a largura dos botões */
+    max-width: 250px;
     margin-top: 25px;
 }
 
@@ -559,12 +594,13 @@ body {
 
 .btn-settings-action:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
 .btn-settings-action.connect {
     background-color: var(--success-color);
 }
+
 .btn-settings-action.connect:hover {
     background-color: #218838;
 }
@@ -572,6 +608,7 @@ body {
 .btn-settings-action.disconnect {
     background-color: var(--error-color);
 }
+
 .btn-settings-action.disconnect:hover {
     background-color: #c82333;
 }

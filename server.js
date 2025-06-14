@@ -12,13 +12,14 @@ const envioController = require('./src/controllers/envioController');
 const rastreamentoController = require('./src/controllers/rastreamentoController');
 const whatsappService = require('./src/services/whatsappService');
 const integracaoController = require('./src/controllers/integracaoController');
-const pedidoService = require('./src/services/pedidoService'); // Importação necessária para o onMessage
+const pedidoService = require('./src/services/pedidoService');
 
 
 // --- GERENCIAMENTO DE ESTADO ---
 let whatsappStatus = 'DISCONNECTED';
 let qrCodeData = null;
 let venomClient = null;
+let botInfo = null;
 
 const app = express();
 const PORT = 3000;
@@ -63,23 +64,49 @@ async function connectToWhatsApp() {
         {
             session: 'automaza-bot',
             useChrome: false,
-            headless: 'new', // Mantenha como 'false' por enquanto para facilitar a depuração
+            headless: 'new',
             browserArgs: ['--no-sandbox', '--disable-setuid-sandbox']
         },
         (base64Qr, asciiQR, attempts, urlCode) => {
             console.log('QR Code recebido. Envie para o painel.');
             broadcastStatus('QR_CODE', { qrCode: base64Qr });
         },
-        // O callback de status agora serve mais para LOGs, a lógica principal vai para o .then()
         (statusSession, session) => {
             console.log('[Status da Sessão Durante Conexão]', statusSession);
         }
     )
     .then((client) => {
         console.log('✅ Cliente Venom criado com SUCESSO. Iniciando rotinas...');
-        // AGORA SIM, AQUI É O LUGAR SEGURO PARA DIZER QUE ESTÁ CONECTADO
-        start(client); // Chama a função que ativa o onMessage
-        broadcastStatus('CONNECTED'); // E notifica o frontend
+        const hostDevice = client.getHostDevice();
+
+        // --- ETAPA DE DEPURAÇÃO ---
+        console.log('[DEPURAÇÃO] Estrutura do objeto hostDevice:', hostDevice);
+
+        // --- CÓDIGO CORRIGIDO E MAIS SEGURO ---
+        // Verificamos se hostDevice e hostDevice.wid existem antes de tentar acessá-los
+        if (hostDevice && hostDevice.wid) {
+            const numeroBot = hostDevice.wid.user;
+            const nomeBot = hostDevice.pushname;
+            botInfo = { numero: numeroBot, nome: nomeBot };
+
+            client.getProfilePicFromServer(hostDevice.wid._serialized)
+                .then(url => {
+                    if (botInfo) botInfo.fotoUrl = url;
+                })
+                .catch(err => {
+                    console.warn("Não foi possível obter a foto de perfil do próprio bot.");
+                    if (botInfo) botInfo.fotoUrl = null;
+                })
+                .finally(() => {
+                    start(client);
+                    broadcastStatus('CONNECTED', { botInfo });
+                });
+        } else {
+            // Se a estrutura for inesperada, continuamos sem os dados do bot, mas sem quebrar
+            console.error('❌ Não foi possível obter os dados do dispositivo host (hostDevice.wid está undefined). Continuando sem eles.');
+            start(client);
+            broadcastStatus('CONNECTED');
+        }
     })
     .catch((erro) => {
         console.error('❌ Erro DETALHADO ao criar cliente Venom:', erro);
@@ -103,24 +130,40 @@ function start(client) {
     venomClient = client;
     whatsappService.iniciarWhatsApp(client);
     
-    // --- CORREÇÃO: Lógica para processar mensagens recebidas ---
     client.onMessage(async (message) => {
-        if (message.isGroupMsg || !message.body || message.from === 'status@broadcast') return;
-
+        console.log('\n--- [onMessage] Evento de mensagem recebido! ---');
+        if (message.isGroupMsg || !message.body || message.from === 'status@broadcast') {
+            console.log('[onMessage] Mensagem ignorada (grupo, sem corpo ou status).'); 
+            return;
+        }
         const telefoneCliente = message.from.replace('@c.us', '');
+        console.log(`[onMessage] Mensagem recebida de: ${telefoneCliente}`);
+        console.log(`[onMessage] Conteúdo: "${message.body}"`);
         
         try {
-            // Reutiliza o 'req.db' que foi inicializado uma vez
-            const pedido = await pedidoService.findPedidoByTelefone(app.get('db'), telefoneCliente);
-            if (pedido) {
-                console.log(`💬 Mensagem recebida de ${pedido.nome}`);
-                await pedidoService.addMensagemHistorico(app.get('db'), pedido.id, message.body, 'recebida', 'cliente');
-                
-                // Notifica todos os painéis em tempo real sobre a nova mensagem
-                broadcast({ type: 'nova_mensagem', pedidoId: pedido.id });
+            const db = app.get('db');
+            let pedido = await pedidoService.findPedidoByTelefone(db, telefoneCliente);
+            
+            if (!pedido) {
+                console.log(`[onMessage] AVISO: Nenhum pedido encontrado para ${telefoneCliente}. Criando novo contato...`);
+                const nomeContato = message.notifyName || message.pushName || telefoneCliente;
+                const novoPedidoData = {
+                    nome: nomeContato,
+                    telefone: telefoneCliente,
+                    produto: 'Novo Contato (via WhatsApp)',
+                    codigoRastreio: null
+                };
+                pedido = await pedidoService.criarPedido(db, novoPedidoData, client);
+                console.log(`[onMessage] SUCESSO! Novo contato criado: ${pedido.nome} (ID: ${pedido.id})`);
+                broadcast({ type: 'novo_contato', pedido });
+            } else {
+                await pedidoService.incrementarNaoLidas(db, pedido.id);
             }
+            await pedidoService.addMensagemHistorico(db, pedido.id, message.body, 'recebida', 'cliente');
+            console.log(`[onMessage] Mensagem de "${message.body}" salva no histórico do pedido ID ${pedido.id}.`);
+            broadcast({ type: 'nova_mensagem', pedidoId: pedido.id });
         } catch (error) {
-            console.error("Erro ao processar mensagem recebida:", error);
+            console.error("[onMessage] Erro CRÍTICO ao processar mensagem recebida:", error);
         }
     });
     
@@ -131,14 +174,13 @@ function start(client) {
 const startApp = async () => {
     try {
         const db = await initDb();
-        app.set('db', db); // NOVO: Guarda a instância do DB para ser usada no onMessage
+        app.set('db', db);
         console.log("Banco de dados pronto.");
 
         app.use(express.json());
         app.use(express.static('public'));
         app.use((req, res, next) => { req.db = db; next(); });
 
-        // --- CORREÇÃO: Rotas da API sem duplicação ---
         console.log("✔️ Registrando rotas da API...");
         app.get('/api/pedidos', pedidosController.listarPedidos);
         app.post('/api/pedidos', pedidosController.criarPedido);
@@ -148,7 +190,6 @@ const startApp = async () => {
         app.post('/api/pedidos/:id/enviar-mensagem', pedidosController.enviarMensagemManual);
         app.post('/api/pedidos/:id/atualizar-foto', pedidosController.atualizarFotoDoPedido);
         app.put('/api/pedidos/:id/marcar-como-lido', pedidosController.marcarComoLido);
-        
         app.post('/api/integracao/postback', integracaoController.receberPostback);
 
         // Rotas para controle do WhatsApp

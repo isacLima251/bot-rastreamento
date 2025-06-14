@@ -20,8 +20,16 @@
                 </div>
             </header>
             <div id="status-whatsapp" class="status-indicator disconnected">
-                <span class="status-dot"></span>
-                <span class="status-text">Desconectado</span>
+                <div class="status-light">
+                    <span class="status-dot"></span>
+                </div>
+                <div class="status-text">
+                    <strong id="status-text-label">Desconectado</strong>
+                    <span id="status-bot-info"></span>
+                </div>
+                <div id="bot-avatar-container" class="hidden">
+                    <img id="bot-avatar-img" src="" alt="Avatar do Bot">
+                </div>
             </div>
             <div class="search-container">
                 <input type="text" id="barra-busca" placeholder="🔎 Buscar por nome ou telefone...">
