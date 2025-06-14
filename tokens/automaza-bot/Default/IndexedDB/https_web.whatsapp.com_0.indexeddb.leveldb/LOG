@@ -1,40 +1,40 @@
-2025/06/14-11:37:50.928 41c0 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
-2025/06/14-11:37:50.929 41c0 Recovering log #553
-2025/06/14-11:37:50.952 41c0 Reusing old log C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000553.log 
-2025/06/14-11:37:52.157 41c0 Level-0 table #570: started
-2025/06/14-11:37:52.168 41c0 Level-0 table #570: 687992 bytes OK
-2025/06/14-11:37:52.170 41c0 Delete type=0 #553
-2025/06/14-11:37:52.170 41c0 Manual compaction at level-0 from '\x00-\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00.\x00\x00\x00' @ 0 : 0; will stop at '\x00-\x00\x00\x05' @ 2229926 : 1
-2025/06/14-11:37:52.170 41c0 Compacting 1@0 + 1@1 files
-2025/06/14-11:37:52.183 41c0 Generated table #571@0: 19152 keys, 332542 bytes
-2025/06/14-11:37:52.184 41c0 Generated table #572@0: 106 keys, 2908 bytes
-2025/06/14-11:37:52.184 41c0 Compacted 1@0 + 1@1 files => 335450 bytes
-2025/06/14-11:37:52.185 41c0 compacted to: files[ 0 2 19 0 0 0 0 ]
-2025/06/14-11:37:52.186 41c0 Delete type=2 #570
-2025/06/14-11:37:52.186 41c0 Manual compaction at level-0 from '\x00-\x00\x00\x05' @ 2229926 : 1 .. '\x00.\x00\x00\x00' @ 0 : 0; will stop at (end)
-2025/06/14-11:37:53.036 6bd8 Compacting 1@1 + 10@2 files
-2025/06/14-11:37:53.092 6bd8 Generated table #573@1: 91684 keys, 2257902 bytes
-2025/06/14-11:37:53.122 6bd8 Generated table #574@1: 21204 keys, 2173597 bytes
-2025/06/14-11:37:53.143 6bd8 Generated table #575@1: 2463 keys, 2145106 bytes
-2025/06/14-11:37:53.166 6bd8 Generated table #576@1: 2596 keys, 2146024 bytes
-2025/06/14-11:37:53.197 6bd8 Generated table #577@1: 18501 keys, 2190979 bytes
-2025/06/14-11:37:53.233 6bd8 Generated table #578@1: 23635 keys, 2201313 bytes
-2025/06/14-11:37:53.258 6bd8 Generated table #579@1: 15062 keys, 2137238 bytes
-2025/06/14-11:37:53.305 6bd8 Generated table #580@1: 92294 keys, 2239973 bytes
-2025/06/14-11:37:53.355 6bd8 Generated table #581@1: 92469 keys, 2240984 bytes
-2025/06/14-11:37:53.405 6bd8 Generated table #582@1: 91636 keys, 2238953 bytes
-2025/06/14-11:37:53.408 6bd8 Generated table #583@1: 4242 keys, 104768 bytes
-2025/06/14-11:37:53.408 6bd8 Compacted 1@1 + 10@2 files => 22076837 bytes
-2025/06/14-11:37:53.415 6bd8 compacted to: files[ 0 1 20 0 0 0 0 ]
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #556
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #557
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #558
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #559
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #560
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #561
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #562
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #563
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #564
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #565
-2025/06/14-11:37:53.415 6bd8 Delete type=2 #566
-2025/06/14-11:37:53.416 6bd8 Delete type=2 #571
+2025/06/14-11:55:52.052 5f08 Reusing MANIFEST C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/06/14-11:55:52.052 5f08 Recovering log #569
+2025/06/14-11:55:52.079 5f08 Reusing old log C:\Users\claud\meu-bot-rastreamento\tokens\automaza-bot\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000569.log 
+2025/06/14-11:55:53.319 5f08 Level-0 table #586: started
+2025/06/14-11:55:53.330 5f08 Level-0 table #586: 697755 bytes OK
+2025/06/14-11:55:53.331 5f08 Delete type=0 #569
+2025/06/14-11:55:53.332 5f08 Manual compaction at level-0 from '\x00.\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00/\x00\x00\x00' @ 0 : 0; will stop at '\x00.\x00\x00\x05' @ 2262372 : 1
+2025/06/14-11:55:53.332 5f08 Compacting 1@0 + 1@1 files
+2025/06/14-11:55:53.345 5f08 Generated table #587@0: 19215 keys, 336993 bytes
+2025/06/14-11:55:53.346 5f08 Generated table #588@0: 116 keys, 3029 bytes
+2025/06/14-11:55:53.346 5f08 Compacted 1@0 + 1@1 files => 340022 bytes
+2025/06/14-11:55:53.347 5f08 compacted to: files[ 0 2 20 0 0 0 0 ]
+2025/06/14-11:55:53.347 5f08 Delete type=2 #586
+2025/06/14-11:55:53.348 5f08 Manual compaction at level-0 from '\x00.\x00\x00\x05' @ 2262372 : 1 .. '\x00/\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/06/14-11:55:54.199 58e0 Compacting 1@1 + 10@2 files
+2025/06/14-11:55:54.255 58e0 Generated table #589@1: 93709 keys, 2246955 bytes
+2025/06/14-11:55:54.286 58e0 Generated table #590@1: 23143 keys, 2194428 bytes
+2025/06/14-11:55:54.306 58e0 Generated table #591@1: 2473 keys, 2146296 bytes
+2025/06/14-11:55:54.328 58e0 Generated table #592@1: 2596 keys, 2145244 bytes
+2025/06/14-11:55:54.357 58e0 Generated table #593@1: 17391 keys, 2186634 bytes
+2025/06/14-11:55:54.395 58e0 Generated table #594@1: 24771 keys, 2206177 bytes
+2025/06/14-11:55:54.419 58e0 Generated table #595@1: 11101 keys, 2133118 bytes
+2025/06/14-11:55:54.469 58e0 Generated table #596@1: 92502 keys, 2240898 bytes
+2025/06/14-11:55:54.518 58e0 Generated table #597@1: 92588 keys, 2238810 bytes
+2025/06/14-11:55:54.565 58e0 Generated table #598@1: 91668 keys, 2238858 bytes
+2025/06/14-11:55:54.569 58e0 Generated table #599@1: 3769 keys, 94081 bytes
+2025/06/14-11:55:54.569 58e0 Compacted 1@1 + 10@2 files => 22071499 bytes
+2025/06/14-11:55:54.570 58e0 compacted to: files[ 0 1 21 0 0 0 0 ]
+2025/06/14-11:55:54.570 58e0 Delete type=2 #572
+2025/06/14-11:55:54.570 58e0 Delete type=2 #573
+2025/06/14-11:55:54.570 58e0 Delete type=2 #574
+2025/06/14-11:55:54.570 58e0 Delete type=2 #575
+2025/06/14-11:55:54.570 58e0 Delete type=2 #576
+2025/06/14-11:55:54.570 58e0 Delete type=2 #577
+2025/06/14-11:55:54.570 58e0 Delete type=2 #578
+2025/06/14-11:55:54.570 58e0 Delete type=2 #579
+2025/06/14-11:55:54.570 58e0 Delete type=2 #580
+2025/06/14-11:55:54.570 58e0 Delete type=2 #581
+2025/06/14-11:55:54.570 58e0 Delete type=2 #582
+2025/06/14-11:55:54.570 58e0 Delete type=2 #587

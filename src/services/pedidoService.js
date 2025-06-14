@@ -120,18 +120,29 @@ const updateCamposPedido = (db, pedidoId, campos) => {
  * Adiciona uma nova entrada ao histórico de mensagens.
  */
 const addMensagemHistorico = (db, pedidoId, mensagem, tipoMensagem, origem) => {
-    const sql = `INSERT INTO historico_mensagens (pedido_id, mensagem, tipo_mensagem, origem) VALUES (?, ?, ?, ?)`;
     return new Promise((resolve, reject) => {
-        db.run(sql, [pedidoId, mensagem, tipoMensagem, origem], function(err) {
+        const sqlInsert = `INSERT INTO historico_mensagens (pedido_id, mensagem, tipo_mensagem, origem) VALUES (?, ?, ?, ?)`;
+        
+        db.run(sqlInsert, [pedidoId, mensagem, tipoMensagem, origem], function(err) {
             if (err) {
                 console.error(`Erro ao adicionar ao histórico do pedido ${pedidoId}`, err);
                 return reject(err);
             }
-            resolve({ id: this.lastID });
+
+            // --- NOVO: Atualiza a tabela de pedidos com a última mensagem ---
+            const dataAgora = new Date().toISOString();
+            const sqlUpdate = `UPDATE pedidos SET ultimaMensagem = ?, dataUltimaMensagem = ? WHERE id = ?`;
+            
+            db.run(sqlUpdate, [mensagem, dataAgora, pedidoId], (updateErr) => {
+                if (updateErr) {
+                    // Mesmo se esta atualização falhar, não quebra a operação principal
+                    console.error(`Erro ao atualizar ultimaMensagem para o pedido ${pedidoId}`, updateErr);
+                }
+                resolve({ id: this.lastID });
+            });
         });
     });
 };
-
 /**
  * Busca o histórico de mensagens de um pedido específico.
  */

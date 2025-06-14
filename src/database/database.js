@@ -36,19 +36,29 @@ const initDb = () => {
                     }
                     console.log("✔️ Tabela 'pedidos' pronta.");
 
-                    // --- ADICIONA A COLUNA 'mensagensNaoLidas' APÓS CRIAR A TABELA ---
+                    // Adiciona a coluna 'mensagensNaoLidas'
                     db.run("ALTER TABLE pedidos ADD COLUMN mensagensNaoLidas INTEGER DEFAULT 0 NOT NULL;", (alterErr) => {
-                        if (alterErr) {
-                            // Se o erro for 'coluna duplicada', é esperado. Ignoramos.
-                            if (alterErr.message.includes('duplicate column name')) {
-                                console.log("✔️ Coluna 'mensagensNaoLidas' já existe.");
-                            } else {
-                                // Se for outro erro, ele é crítico.
-                                console.error("❌ Erro ao adicionar coluna 'mensagensNaoLidas':", alterErr.message);
-                                return reject(alterErr);
-                            }
-                        } else {
-                            console.log("✔️ Coluna 'mensagensNaoLidas' adicionada com sucesso.");
+                        if (alterErr && !alterErr.message.includes('duplicate column')) {
+                            console.error("❌ Erro ao adicionar coluna 'mensagensNaoLidas':", alterErr.message);
+                        } else if (!alterErr) {
+                            console.log("✔️ Coluna 'mensagensNaoLidas' adicionada.");
+                        }
+                    });
+
+                    // --- NOVO: Adiciona as colunas para 'ultimaMensagem' ---
+                    db.run("ALTER TABLE pedidos ADD COLUMN ultimaMensagem TEXT;", (alterErr) => {
+                        if (alterErr && !alterErr.message.includes('duplicate column')) {
+                            console.error("❌ Erro ao adicionar coluna 'ultimaMensagem':", alterErr.message);
+                        } else if (!alterErr) {
+                            console.log("✔️ Coluna 'ultimaMensagem' adicionada.");
+                        }
+                    });
+
+                    db.run("ALTER TABLE pedidos ADD COLUMN dataUltimaMensagem DATETIME;", (alterErr) => {
+                        if (alterErr && !alterErr.message.includes('duplicate column')) {
+                            console.error("❌ Erro ao adicionar coluna 'dataUltimaMensagem':", alterErr.message);
+                        } else if (!alterErr) {
+                            console.log("✔️ Coluna 'dataUltimaMensagem' adicionada.");
                         }
                     });
                 });
@@ -72,7 +82,6 @@ const initDb = () => {
                     console.log("✔️ Tabela 'historico_mensagens' pronta.");
                 });
 
-                // Resolve a promise aqui no final do serialize para garantir que tudo foi enfileirado
                 resolve(db);
             });
         });

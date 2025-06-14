@@ -96,26 +96,18 @@ const connectWebSocket = () => {
         ws.onopen = () => console.log('🔗 Conexão WebSocket estabelecida.');
         
         ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log('🔔 Notificação WebSocket recebida:', data);
-            
-            if (data.type === 'nova_mensagem') {
-                const pedidoAfetado = todosOsPedidos.find(p => p.id === data.pedidoId);
-                if (pedidoAfetado) {
-                    if (pedidoAfetado.id !== pedidoAtivoId) {
-                        pedidoAfetado.mensagensNaoLidas = (pedidoAfetado.mensagensNaoLidas || 0) + 1;
-                        renderizarListaDeContactos();
-                    } else {
-                        fetchErenderizarTudo();
-                    }
-                }
-            } else if (data.type === 'novo_contato') {
-                showNotification(`Novo contato recebido: ${data.pedido.nome}`, 'success');
-                fetchErenderizarTudo();
-            } else if (data.type === 'status_update') {
-                updateStatusUI(data.status, data);
-            }
-        };
+             const data = JSON.parse(event.data);
+    console.log('🔔 Notificação WebSocket recebida:', data);
+    
+    // Se for uma mensagem nova OU um contato novo, simplesmente recarrega tudo.
+    // Isso garante que a contagem de não lidos e a lista de contatos estejam sempre 100% atualizadas com o banco de dados.
+    if (data.type === 'nova_mensagem' || data.type === 'novo_contato') {
+        fetchErenderizarTudo();
+    
+    } else if (data.type === 'status_update') {
+        updateStatusUI(data.status, data);
+    }
+};
 
         ws.onclose = () => {
             console.log('🔌 Conexão WebSocket fechada. A tentar reconectar...');
@@ -125,48 +117,54 @@ const connectWebSocket = () => {
 
     // --- 5. Funções de Renderização e API ---
     const renderizarListaDeContactos = () => {
-        const termoBusca = barraBuscaEl.value.toLowerCase();
-        const filtrados = todosOsPedidos.filter(p => 
-            (p.nome && p.nome.toLowerCase().includes(termoBusca)) || 
-            (p.telefone && p.telefone.includes(termoBusca))
-        );
+    const termoBusca = barraBuscaEl.value.toLowerCase();
+    const filtrados = todosOsPedidos.filter(p => 
+        (p.nome && p.nome.toLowerCase().includes(termoBusca)) || 
+        (p.telefone && p.telefone.includes(termoBusca))
+    );
+    
+    listaContactosEl.innerHTML = '';
+    if (filtrados.length === 0) {
+        listaContactosEl.innerHTML = `<p class="info-mensagem">${termoBusca ? `Nenhum resultado para "${termoBusca}"` : 'Nenhum contacto.'}</p>`;
+        return;
+    }
+
+    // --- ATUALIZADO: Ordena pela data da última mensagem ---
+    filtrados.sort((a, b) => new Date(b.dataUltimaMensagem || 0) - new Date(a.dataUltimaMensagem || 0));
+
+    filtrados.forEach(pedido => {
+        const item = document.createElement('div');
+        item.className = 'contact-item';
+        item.dataset.id = pedido.id;
+        if (pedido.id === pedidoAtivoId) item.classList.add('active');
+
+        const primeiraLetra = pedido.nome ? pedido.nome.charAt(0).toUpperCase() : '?';
+        const fotoHtml = pedido.fotoPerfilUrl
+            ? `<img src="${pedido.fotoPerfilUrl}" alt="Foto de ${pedido.nome}" onerror="this.style.display='none'; this.parentElement.querySelector('.avatar-fallback').style.display='flex';">
+               <div class="avatar-fallback" style="display: none;">${primeiraLetra}</div>`
+            : `<div class="avatar-fallback">${primeiraLetra}</div>`;
         
-        listaContactosEl.innerHTML = '';
-        if (filtrados.length === 0) {
-            listaContactosEl.innerHTML = `<p class="info-mensagem">${termoBusca ? `Nenhum resultado para "${termoBusca}"` : 'Nenhum contacto.'}</p>`;
-            return;
-        }
+        const bolinhaDisplay = pedido.mensagensNaoLidas > 0 ? 'flex' : 'none';
+        const bolinhaHtml = `<div class="unread-indicator" style="display: ${bolinhaDisplay};"></div>`;
+        
+        // --- ATUALIZADO: Exibe a última mensagem ---
+        const previewMensagem = pedido.ultimaMensagem 
+            ? pedido.ultimaMensagem.substring(0, 35) + (pedido.ultimaMensagem.length > 35 ? '...' : '')
+            : 'Novo Pedido';
 
-        filtrados.sort((a, b) => (b.mensagensNaoLidas || 0) - (a.mensagensNaoLidas || 0));
-
-        filtrados.forEach(pedido => {
-            const item = document.createElement('div');
-            item.className = 'contact-item';
-            item.dataset.id = pedido.id;
-            if (pedido.id === pedidoAtivoId) item.classList.add('active');
-
-            const primeiraLetra = pedido.nome ? pedido.nome.charAt(0).toUpperCase() : '?';
-            const fotoHtml = pedido.fotoPerfilUrl
-                ? `<img src="${pedido.fotoPerfilUrl}" alt="Foto de ${pedido.nome}" onerror="this.style.display='none'; this.parentElement.querySelector('.avatar-fallback').style.display='flex';">
-                   <div class="avatar-fallback" style="display: none;">${primeiraLetra}</div>`
-                : `<div class="avatar-fallback">${primeiraLetra}</div>`;
-            
-            const bolinhaDisplay = pedido.mensagensNaoLidas > 0 ? 'flex' : 'none';
-            const bolinhaHtml = `<div class="unread-indicator" style="display: ${bolinhaDisplay};"></div>`;
-
-            item.innerHTML = `
-                <div class="avatar-container">
-                    ${fotoHtml}
-                </div>
-                <div class="info">
-                    <h4>${pedido.nome}</h4>
-                    <p>${pedido.statusInterno || 'Novo Pedido'}</p>
-                </div>
-                ${bolinhaHtml}
-            `;
-            listaContactosEl.appendChild(item);
-        });
-    };
+        item.innerHTML = `
+            <div class="avatar-container">
+                ${fotoHtml}
+            </div>
+            <div class="info">
+                <h4>${pedido.nome}</h4>
+                <p>${previewMensagem}</p>
+            </div>
+            ${bolinhaHtml}
+        `;
+        listaContactosEl.appendChild(item);
+    });
+};
     
     const selecionarPedidoErenderizarDetalhes = async (pedido) => {
         if (!pedido) return;
